@@ -1235,7 +1235,7 @@ function drawCoastline() {
     }
   }
 
-  oceanBase
+  oceanCoast
     .append("path")
     .attr("d", oceanCoastPath)
     .attr("id", "oceanCoast");
