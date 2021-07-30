@@ -63,7 +63,7 @@ function selectStyleElement() {
   }
 
   // filter
-  if (!["landmass", "legend", "regions"].includes(sel)) {
+  if (!["legend", "regions"].includes(sel)) {
     styleFilter.style.display = "block";
     styleFilterInput.value = el.attr("filter") || "";
   }
@@ -75,7 +75,7 @@ function selectStyleElement() {
   }
 
   // stroke color and width
-  if (["armies", "routes", "lakes", "borders", "cults", "relig", "cells", "coastline", "prec", "ice", "icons", "coordinates", "zones", "gridOverlay"].includes(sel)) {
+  if (["armies", "routes", "lakes", "borders", "cults", "relig", "cells", "coastline", "prec", "ice", "icons", "coordinates", "zones", "gridOverlay", "landmass", "ocean"].includes(sel)) {
     styleStroke.style.display = "block";
     styleStrokeInput.value = styleStrokeOutput.value = el.attr("stroke");
     styleStrokeWidth.style.display = "block";
@@ -90,7 +90,7 @@ function selectStyleElement() {
   }
 
   // clipping
-  if (["cells", "gridOverlay", "coordinates", "compass", "terrain", "temperature", "routes", "texture", "biomes", "zones"].includes(sel)) {
+  if (["cells", "gridOverlay", "coordinates", "compass", "terrain", "temperature", "routes", "texture", "biomes", "zones", "landmass"].includes(sel)) {
     styleClipping.style.display = "block";
     styleClippingInput.value = el.attr("mask") || "";
   }

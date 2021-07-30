@@ -108,7 +108,6 @@ a {
 }
 
 #landmass {
-  mask: url(#land);
   fill-rule: evenodd;
 }
 

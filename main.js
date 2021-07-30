@@ -26,6 +26,7 @@ let viewbox = svg.select("#viewbox");
 let scaleBar = svg.select("#scaleBar");
 let legend = svg.append("g").attr("id", "legend");
 let ocean = viewbox.append("g").attr("id", "ocean");
+let oceanCoast= ocean.append("g").attr("id", "oceanCoast");
 let oceanLayers = ocean.append("g").attr("id", "oceanLayers");
 let oceanPattern = ocean.append("g").attr("id", "oceanPattern");
 let lakes = viewbox.append("g").attr("id", "lakes");
@@ -160,7 +161,7 @@ let graphWidth = +mapWidthInput.value,
   graphHeight = +mapHeightInput.value; // voronoi graph extention, cannot be changed arter generation
 let svgWidth = graphWidth,
   svgHeight = graphHeight; // svg canvas resolution, can be changed
-landmass.append("rect").attr("x", 0).attr("y", 0).attr("width", graphWidth).attr("height", graphHeight);
+// landmass.append("rect").attr("x", 0).attr("y", 0).attr("width", graphWidth).attr("height", graphHeight);
 oceanPattern.append("rect").attr("fill", "url(#oceanic)").attr("x", 0).attr("y", 0).attr("width", graphWidth).attr("height", graphHeight);
 oceanLayers.append("rect").attr("id", "oceanBase").attr("x", 0).attr("y", 0).attr("width", graphWidth).attr("height", graphHeight);
 
@@ -1160,6 +1161,9 @@ function drawCoastline() {
   const waterMask = defs.select("#water");
   lineGen.curve(d3.curveBasisClosed);
 
+  // clockwise rectangle for ocean to be "punctured" by land later
+  let oceanCoastPath = `M 0,0 L ${graphWidth},0 ${graphWidth},${graphHeight} 0,${graphHeight} 0,0 z`;
+
   for (const i of cells.i) {
     const startFromEdge = !i && cells.h[i] >= 20;
     if (!startFromEdge && cells.t[i] !== -1 && cells.t[i] !== 1) continue; // non-edge cell
@@ -1187,6 +1191,8 @@ function drawCoastline() {
     features[f].vertices = vchain;
 
     const path = round(lineGen(points));
+    oceanCoastPath += " " + path
+
     if (features[f].type === "lake") {
       landMask
         .append("path")
@@ -1201,6 +1207,7 @@ function drawCoastline() {
         .attr("id", "lake_" + f)
         .attr("data-f", f); // draw the lake
     } else {
+      landmass.append("path").attr("d", path)
       landMask
         .append("path")
         .attr("d", path)
@@ -1227,6 +1234,11 @@ function drawCoastline() {
       rulers.create(Ruler, [from, to]);
     }
   }
+
+  oceanBase
+    .append("path")
+    .attr("d", oceanCoastPath)
+    .attr("id", "oceanCoast");
 
   // find cell vertex to start path detection
   function findStart(i, t) {
