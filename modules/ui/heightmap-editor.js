@@ -196,7 +196,8 @@ function editHeightmap() {
     if (!erosionAllowed) {
       for (const i of pack.cells.i) {
         const g = pack.cells.g[i];
-        if (pack.cells.h[i] !== grid.cells.h[g] && pack.cells.h[i] >= 20 === grid.cells.h[g] >= 20) pack.cells.h[i] = grid.cells.h[g];
+        if (pack.cells.h[i] !== grid.cells.h[g] && pack.cells.h[i] >= 20 === grid.cells.h[g] >= 20)
+          pack.cells.h[i] = grid.cells.h[g];
       }
     }
 
@@ -1248,9 +1249,9 @@ function editHeightmap() {
       event.preventDefault();
       event.stopPropagation();
       alertMessage.innerHTML = `
-        Are you sure you want to close the Image Converter? 
-        Click "Cancel" to geck back to convertion. 
-        Click "Complete" to apply the conversion. 
+        Are you sure you want to close the Image Converter?
+        Click "Cancel" to geck back to convertion.
+        Click "Complete" to apply the conversion.
         Click "Close" to exit conversion mode and restore previous heightmap`;
 
       $("#alert").dialog({
