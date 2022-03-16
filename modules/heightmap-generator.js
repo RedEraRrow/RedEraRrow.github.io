@@ -81,6 +81,7 @@ window.HeightmapGenerator = (function () {
     if (cells === 80000) return 0.9942;
     if (cells === 90000) return 0.9946;
     if (cells === 100000) return 0.995;
+    if (cells > 100000) return 0.9955;
   }
 
   function getLinePower() {
@@ -98,6 +99,7 @@ window.HeightmapGenerator = (function () {
     if (cells === 80000) return 0.91;
     if (cells === 90000) return 0.92;
     if (cells === 100000) return 0.93;
+    if (cells > 100000) return 0.94;
   }
 
   const addHill = function (count, height, rangeX, rangeY) {

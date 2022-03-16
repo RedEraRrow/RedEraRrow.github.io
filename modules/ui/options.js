@@ -349,6 +349,9 @@ function changeCellsDensity(value) {
     if (v == 11) return 80000;
     if (v == 12) return 90000;
     if (v == 13) return 100000;
+    if (v == 14) return 200000;
+    if (v == 15) return 500000;
+    if (v == 16) return 1000000;
   };
   const cells = convert(value);
 
