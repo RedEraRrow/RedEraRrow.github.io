@@ -13,6 +13,15 @@ function openSubmapOptions() {
   });
 }
 
+function openRemapOptions() {
+  $("#remapOptionsDialog").dialog({
+    title: "Resampler options",
+    resizable: false,
+    width: fitContent(),
+    position: {my: "right top", at: "right-10 top+10", of: "svg", collision: "fit"}
+  });
+}
+
 const generateSubmap = debounce(async function () {
   // Create submap from the current map
   // submap limits defined by the current window size (canvas viewport)
@@ -21,13 +30,12 @@ const generateSubmap = debounce(async function () {
   closeDialogs("#worldConfigurator, #options3d");
   const checked = id => Boolean(document.getElementById(id).checked)
   const options = {
-    promoteTown: checked("submapPromoteTown"),
+    lockMarkers: checked("submapLockMarkers"),
+    lockBurgs: checked("submapLockBurgs"),
+
     depressRivers: checked("submapDepressRivers"),
-    copyBurgs: checked("submapCopyBurgs"),
     addLakesInDepressions: checked("submapAddLakeInDepression"),
-    addMilitary: checked("submapAddMilitary"),
-    addMarkers: checked("submapAddMarkers"),
-    addZones: checked("submapAddZones"),
+    promoteTown: checked("submapPromoteTown"),
     smoothHeightMap: scale > 2,
   }
 
@@ -73,6 +81,7 @@ const generateSubmap = debounce(async function () {
   oldstate = null; // destroy old state to free memory
 
   restoreLayers();
+  turnButtonOn('toggleMarkers');
   if (ThreeD.options.isOn) ThreeD.redraw();
   if ($("#worldConfigurator").is(":visible")) editWorld();
 }, 1000);

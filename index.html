@@ -959,6 +959,7 @@
                   <option value="isthmus">Isthmus</option>
                   <option value="shattered">Shattered</option>
                   <option value="taklamakan">Taklamakan</option>
+                  <option value="oldWorld">Old World</option>
                 </optgroup>
                 <optgroup label="Specific">
                   <option value="africa-centric">Africa Centric</option>
@@ -1367,8 +1368,9 @@
         </div>
 
         <p>Click to create a new map:</p>
-        <div id="reSample">
-          <button id="openSubmapOptions" data-tip="Click to generate new (sub)map from the current viewport" onclick="openSubmapOptions()">Submap</button>
+        <div id="resamplers">
+          <button data-tip="Click to generate new (sub)map from the current viewport" onclick="openSubmapOptions()">Submap</button>
+          <button data-tip="Click to resample (transform) your map to different cellcount" onclick="openRemapOptions()">Resample</button>
         </div>
       </div>
 
@@ -2404,6 +2406,7 @@
           <option value="isthmus">Isthmus</option>
           <option value="shattered">Shattered</option>
           <option value="taklamakan">Taklamakan</option>
+          <option value="oldWorld">Old World</option>
         </select>
       </div>
       <div id="templateTools">
@@ -2855,6 +2858,7 @@
         <button id="culturesEditNamesBase" data-tip="Edit a database used for names generation" class="icon-font"></button>
         <button id="culturesAdd" data-tip="Add a new culture. Hold Shift to add multiple" class="icon-plus"></button>
         <button id="culturesExport" data-tip="Download cultures-related data" class="icon-download"></button>
+        <button id="culturesImport" data-tip="Upload cultures-related data" class="icon-upload"></button>
         <button id="culturesRecalculate" data-tip="Recalculate cultures based on current values of growth-related attributes" class="icon-retweet"></button>
         <span data-tip="Allow culture centers, expansion and type changes to take an immediate effect">
           <input id="culturesAutoChange" class="checkbox" type="checkbox">
@@ -3662,43 +3666,58 @@
     </div>
 
     <div id="submapOptionsDialog" style="display: none; max-width:300px;" class="dialog">
-      <p style="font-style: italic; color: red; font-weight:bold;">Original map will be destroyed! Don't forget to save your work!</p>
-      <p>Population rate (Units editor -> population) and map pixel size will
-        be automatically updated according to the current scale factor. If you'd like
-        to generate a new parent-map, <b>don't forget to reset them!</b> Options are interpreted as usual.</p>
-      <hr />
-      <div data-tip="Copy burgs from old map. Regenerate burgs if not checked." >
-        <input id="submapCopyBurgs" class="checkbox" type="checkbox" checked>
-        <label for="submapCopyBurgs" class="checkbox-label">Copy cities</label>
+      <p style="font-style: italic; color: red; font-weight:bold;">Warning! This operation is destructive and irreversible. Don't forget to save your original map!</p>
+      <p>
+        <em>Settings to be changed:</em> Population rate, map pixel size.
+      </p>
+      <p>
+        <em>Data to be copied:</em> Heightmap, Biome, Religion, Population, Precipitation, Cultures, States, Provinces, Regiments (military), Markers.
+      </p>
+      <p>
+        <em>Data to be destroyed (regenerated):</em> Zones, Roads, Rivers (mostly regenerate at the same place).
+      </p>
+      <p>
+        Remapping Burgs (cities) may be imprecise, you will need to fix missing or wrongly mapped burgs manually.
+      </p>
+      <p>Lock remapped items for:</p>
+      <div data-tip="Lock all markers copied from the original map." >
+        <input id="submapLockMarkers" class="checkbox" type="checkbox" checked>
+        <label for="submapLockMarkers" class="checkbox-label">Markers</label>
       </div>
-      <div data-tip="All small cities of the parent map will be promoted to Capitals." >
-        <input id="submapPromoteTown" class="checkbox" type="checkbox">
-        <label for="submapPromoteTown" class="checkbox-label">Promote towns to cities.</label>
+      <div data-tip="Lock all burgs copied from the original map." >
+        <input id="submapLockBurgs" class="checkbox" type="checkbox" checked>
+        <label for="submapLockBurgs" class="checkbox-label">Burgs (cities)</label>
       </div>
+
+      <p>Extra / experimental features:</p>
       <div data-tip="Rivers on the parent map errode land (helps to get similar river network.)" >
         <input id="submapDepressRivers" class="checkbox" type="checkbox">
         <label for="submapDepressRivers" class="checkbox-label">Errode riverbeds.</label>
       </div>
-      <div data-tip="Add lakes in depressions. (Can be very slow on big landmass!)" >
+      <div data-tip="All small cities of the parent map will be promoted to Capitals" >
+        <input id="submapPromoteTown" class="checkbox" type="checkbox">
+        <label for="submapPromoteTown" class="checkbox-label">Promote towns to cities</label>
+      </div>
+      <div data-tip="Add lakes in depressions. (Can be very slow on big landmasses!)" >
         <input id="submapAddLakeInDepression" class="checkbox" type="checkbox">
-        <label for="submapAddLakeInDepression" class="checkbox-label">Add lakes in depressions.</label>
-      </div>
-      <div data-tip="Regenerate military data in submap." >
-        <input id="submapAddMilitary" class="checkbox" type="checkbox">
-        <label for="submapAddMilitary" class="checkbox-label">Add Military</label>
-      </div>
-      <div data-tip="Regenerate markers data in submap." >
-        <input id="submapAddMarkers" class="checkbox" type="checkbox" checked>
-        <label for="submapAddMarkers" class="checkbox-label">Add Markers</label>
-      </div>
-      <div data-tip="Regenerate military data in submap." >
-        <input id="submapAddZones" class="checkbox" type="checkbox" checked>
-        <label for="submapAddZones" class="checkbox-label">Add Zones</label>
+        <label for="submapAddLakeInDepression" class="checkbox-label">Add lakes in depressions (slow)</label>
       </div>
       <hr/>
       <button id="start" data-tip="Start submap resampling" class="options" onclick="generateSubmap()">Generate</button>
     </div>
 
+    <div id="remapOptionsDialog" style="display: none; max-width:300px;" class="dialog">
+      WIP (not working yet)
+      <table>
+      <td>Points number</td>
+      <td>
+        <input id="submapPointsInput" type="range" min=1 max=13 value=4 data-cells=10000 oninput="event => {document.getElementById('submapPointsOutput').value=cellsDensityConstants[+this.value]/1000 + 'K'; event.stopPropagation()}">
+      </td>
+      <td>
+        <output id="submapPointsOutput" style="color: #053305">10K</output>
+      </td>
+      </table>
+    </div>
     <div id="alert" style="display: none" class="dialog">
       <p id="alertMessage">Warning!</p>
     </div>
@@ -3733,6 +3752,7 @@
     <input type="file" accept=".txt" id="templateToLoad">
     <input type="file" accept=".txt" id="namesbaseToLoad">
     <input type="file" accept=".json" id="styleToLoad">
+    <input type="file" accept=".csv" id="culturesCSVToLoad">
   </div>
 
   <!-- svg elements not required for map display -->
@@ -4382,7 +4402,7 @@
           <path d="M 43.4,0 36.2,12.5 43.4,25 M 21.7,12.5 H 36.2 Z M 0,0 H 14.5 L 21.7,12.5 14.5,25 H 0"/>
         </pattern>
       </g>
-	  
+
       <g id="defs-hatching">
         <pattern id="hatch0" patternUnits="userSpaceOnUse" width="4" height="4">
           <line x1="0" y1="0" x2="0" y2="4" style="stroke:black; stroke-width:2"/>
@@ -4627,6 +4647,7 @@
   <script defer src="modules/io/cloud.js"></script>
   <script defer src="modules/io/export.js"></script>
   <script defer src="modules/io/export-json.js"></script>
+  <script defer src="modules/io/formats.js"></script>
 
   <!-- Web Components -->
   <script defer src="components/fill-box.js"></script>
