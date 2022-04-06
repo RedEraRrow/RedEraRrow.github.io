@@ -152,7 +152,7 @@ window.Submap = (function () {
           continue;
         }
         // find replacement: closest water cell
-        const [ox, oy] = cells.p[id]
+        const [ox, oy] = cells.p[id];
         const [tx, ty] = projection(x, y, true);
         oldid = oldCells.q.find(tx,ty,Infinity)[2];
         if (!oldid) {
@@ -174,14 +174,14 @@ window.Submap = (function () {
             throw new Error("should be the same type.")
           }
           const [oldpx, oldpy] = oldCells.p[oid];
-          const nd = distance(projection(oldpx, oldpx, false));
+          const nd = distance(projection(oldpx, oldpy, false));
           if (!nd) {
-            console.error("no distance!", nd, "old point", oldp)
+            console.error("no distance!", nd, "old point", oldpx, oldpy)
           }
           if (nd < d) [d, oldid] = [nd, oid];
         })
         if (!oldid) {
-          console.warn("Warning, no match for", id, "parent", gridCellId, "in");
+          console.warn("Warning, no match for", id, "(parent:", gridCellId, ")");
           continue;
         }
       }
@@ -387,7 +387,6 @@ window.Submap = (function () {
       }
       if (!b.lock) b.lock = options.lockBurgs;
       pack.cells.burg[b.cell] = id;
-      if (options.promoteTown) b.capital = 1;
     });
   }
 

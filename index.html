@@ -3665,6 +3665,19 @@
       <div id="tileStatus" style="background-color: #33333310; font-style: italic"></div>
     </div>
 
+    <div id="remapOptionsDialog" style="display: none; max-width:300px;" class="dialog">
+      <p style="font-style: italic; color: red; font-weight:bold;">Warning! This operation is destructive and irreversible. Don't forget to save your map!</p>
+      <table>
+      <td>Points number</td>
+      <td>
+        <input id="submapPointsInput" type="range" min=1 max=13 value=4 data-cells=10000 oninput="document.getElementById('submapPointsOutput').value=cellsDensityConstants[+this.value]/1000 + 'K'; event.stopPropagation()">
+      </td>
+      <td>
+        <output id="submapPointsOutput" style="color: #053305">10K</output>
+      </td>
+      </table>
+      <button id="start" data-tip="Start resampling" class="options" onclick="resampleCurrentMap()">Resample</button>
+    </div>
     <div id="submapOptionsDialog" style="display: none; max-width:300px;" class="dialog">
       <p style="font-style: italic; color: red; font-weight:bold;">Warning! This operation is destructive and irreversible. Don't forget to save your original map!</p>
       <p>
@@ -3694,9 +3707,9 @@
         <input id="submapDepressRivers" class="checkbox" type="checkbox">
         <label for="submapDepressRivers" class="checkbox-label">Errode riverbeds.</label>
       </div>
-      <div data-tip="All small cities of the parent map will be promoted to Capitals" >
-        <input id="submapPromoteTown" class="checkbox" type="checkbox">
-        <label for="submapPromoteTown" class="checkbox-label">Promote towns to cities</label>
+      <div data-tip="Move all existing towns to the 'largetown' burg group">
+        <input id="submapPromoteTowns" class="checkbox" type="checkbox">
+        <label for="submapPromoteTowns" class="checkbox-label">Promote towns to largetowns</label>
       </div>
       <div data-tip="Add lakes in depressions. (Can be very slow on big landmasses!)" >
         <input id="submapAddLakeInDepression" class="checkbox" type="checkbox">
@@ -3706,18 +3719,6 @@
       <button id="start" data-tip="Start submap resampling" class="options" onclick="generateSubmap()">Generate</button>
     </div>
 
-    <div id="remapOptionsDialog" style="display: none; max-width:300px;" class="dialog">
-      WIP (not working yet)
-      <table>
-      <td>Points number</td>
-      <td>
-        <input id="submapPointsInput" type="range" min=1 max=13 value=4 data-cells=10000 oninput="event => {document.getElementById('submapPointsOutput').value=cellsDensityConstants[+this.value]/1000 + 'K'; event.stopPropagation()}">
-      </td>
-      <td>
-        <output id="submapPointsOutput" style="color: #053305">10K</output>
-      </td>
-      </table>
-    </div>
     <div id="alert" style="display: none" class="dialog">
       <p id="alertMessage">Warning!</p>
     </div>
