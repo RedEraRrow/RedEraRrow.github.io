@@ -317,28 +317,36 @@ window.Submap = (function () {
   /* find the nearest cell accepted by filter f *and* having at
   *  least one *neighbor* fulfilling filter g, up to cell-distance `max`
   *  returns [cellid, neighbor] tuple or undefined if no such cell.
+  *  accepts coordinates (x, y)
   */
-  const findNearest = (f, g, max=3) => centerId => {
-    const met = new Set(); // cache, f might be expensive
-    const kernel = (c, dist) => {
-      const ncs = pack.cells.c[c].filter(nc => !met.has(nc));
-      const n = ncs.find(g);
-      if (f(c) && n) return [c, n];
-      if (dist >= max || !ncs.length) return undefined;
-      met.add(c);
-      const targets = ncs.filter(f)
-      let answer;
-      while (targets.length && !answer) answer = kernel(targets.shift(), dist+1);
-      return answer;
+  const findNearest = (f, g, max=3) => (px,py) => {
+    const d2 = c => (px-pack.cells.p[c][0])**2 + (py-pack.cells.p[c][0])**2
+    const startCell = findCell(px, py);
+    const tested = new Set([startCell]); // ignore analyzed cells
+    const kernel = (cs, level) => {
+      const [bestf, bestg] = cs.filter(f).reduce(([cf, cg], c) => {
+        const neighbors = pack.cells.c[c];
+        const betterg = neighbors.filter(g).reduce((u, x) => d2(x)<d2(u)? x:u);
+        if (cf === undefined) return [c, betterg];
+        return (betterg && d2(cf) < d2(c))? [c, betterg]: [cf, cg];
+      }, [undefined, undefined]);
+      if (bestf && bestg) return [bestf, bestg];
+
+      // no suitable pair found, retry with next ring
+      const targets = new Set(cs.map(c => pack.cells.c[c]).flat())
+      const ring = Array.from(targets).filter(nc => !tested.has(nc));
+      if (level >= max || !ring.length)
+        return [undefined, undefined];
+      ring.forEach(c => tested.add(c));
+      return kernel(ring, level+1);
     }
-    return kernel(centerId, 1);
+    const pair = kernel([startCell], 1);
+    return pair;
   }
 
   function copyBurgs(parentMap, projection, options) {
     const cells = pack.cells;
     const childMap = { grid, pack }
-    const isCoastFree = c => cells.t[c] === 1 && !cells.burg[c]
-    const isNearCoast = c => cells.t[c] === -1
     pack.burgs = parentMap.pack.burgs;
 
     // remap burgs to the best new cell
@@ -353,55 +361,36 @@ window.Submap = (function () {
         return;
       }
 
-      let cityCell = findCell(b.x, b.y);
+      const cityCell = findCell(b.x, b.y);
+      let searchFunc;
+      const isFreeLand = c => cells.t[c] === 1 && !cells.burg[c];
+      const nearCoast = c => cells.t[c] === -1;
 
-      const searchCoastCell = findNearest(isCoastFree, isNearCoast, 6);
-      const searchFreeCell = findNearest(c => !cells.burg[c],  _=>true, 3);
+      // check if we need to relocate the burg
+      if (cells.burg[cityCell]) // already occupied
+        searchFunc = findNearest(isFreeLand, _ => true, 3);
 
-      // pull sunken burgs out of water
-      if (isWater(childMap, cityCell)) {
-        const res = searchCoastCell(cityCell)
-        if (!res) {
-          WARN && console.warn(`Burg ${b.name} sank like Atlantis. Unable to find coastal cells nearby. Try to reduce resample zoom level.`);
+      if (isWater(childMap, cityCell) || b.port) // burg is in water or port
+        searchFunc = findNearest(isFreeLand, nearCoast, 6);
+
+      if (searchFunc) {
+        const [newCell, neighbor] = searchFunc(b.x, b.y);
+        if (!newCell) {
+          WARN && console.warn(`Can not relocate Burg: ${b.name} sunk and destroyed. :-(`);
           b.cell = null;
           b.removed = true;
           return;
         }
-        const [coast, water] = res;
-        [b.x, b.y] = b.port? getMiddlePoint(coast, water): cells.p[coast];
-        if (b.port) b.port = cells.f[water];
-        b.cell = coast;
-      } else if (b.port) {
-        // find coast for ports on land
-        const res = searchCoastCell(cityCell);
-        if (res) {
-          const [coast, water] = res;
-          [b.x, b.y] = getMiddlePoint(coast, water);
-          b.port = cells.f[water]; // copy feature number
-          b.cell = coast;
-        } else {
-          WARN && console.warn(`Can't find water near port ${b.name}. Increase search radius in searchCoastCell. (Removing port status)`);
-          b.cell = cityCell;
-          [b.x, b.y] = cells.p[cityCell];
-          b.port = 0;
-        }
-      } else if (cells.burg[b.cell]) { // already occupied
-        const res = searchFreeCell(cityCell);
-        if (!res) {
-          WARN && console.warn(`No space left for ${b.name}. Removed.`);
-          b.cell = null;
-          b.removed = true;
-          return;
-        }
-        const [newCell, _] = res;
+        DEBUG && console.log(`Moving ${b.name} from ${cityCell} to ${newCell} near ${neighbor}.`);
+        [b.x, b.y] = b.port? getMiddlePoint(newCell, neighbor): cells.p[newCell];
+        if (b.port) b.port = cells.f[neighbor]; // copy feature number
         b.cell = newCell;
-        [b.x, b.y] = cells.p[newCell];
+        if (b.port && !isWater(childMap, neighbor)) console.error('betrayal! negihbor must be water!', b);
       } else {
         b.cell = cityCell;
-        [b.x, b.y] = cells.p[cityCell];
       }
       if (!b.lock) b.lock = options.lockBurgs;
-      pack.cells.burg[b.cell] = id;
+      cells.burg[b.cell] = id;
     });
   }
 
