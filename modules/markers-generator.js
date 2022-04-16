@@ -151,7 +151,6 @@ window.Markers = (function () {
   }
 
   function deleteMarker(markerId) {
-    const noteId = 'marker' + markerId;
     const noteId = "marker" + markerId;
     notes = notes.filter(note => note.id !== noteId);
     pack.markers = pack.markers.filter(m => m.i !== markerId);
