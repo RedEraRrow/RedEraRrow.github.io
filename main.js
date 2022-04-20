@@ -155,6 +155,7 @@ let options = {
 };
 let mapCoordinates = {}; // map coordinates on globe
 let populationRate = +document.getElementById("populationRateInput").value;
+let distanceScale = +document.getElementById("distanceScaleInput").value;
 let urbanization = +document.getElementById("urbanizationInput").value;
 let urbanDensity = +document.getElementById("urbanDensityInput").value;
 
@@ -240,26 +241,27 @@ async function checkLoadParameters() {
   }
 
   // open latest map if option is active and map is stored
-  const loadLastMap = () => new Promise((resolve, reject) => {
-    ldb.get("lastMap", blob => {
-      if (blob) {
-        WARN && console.warn("Load last saved map");
-        try {
-          uploadMap(blob);
-          resolve();
-        } catch (error) {
-          reject(error);
+  const loadLastMap = () =>
+    new Promise((resolve, reject) => {
+      ldb.get("lastMap", blob => {
+        if (blob) {
+          WARN && console.warn("Load last saved map");
+          try {
+            uploadMap(blob);
+            resolve();
+          } catch (error) {
+            reject(error);
+          }
+        } else {
+          reject("No map stored");
         }
-      } else {
-        reject("No map stored");
-      }
-    })
-  })
+      });
+    });
 
   if (onloadMap.value === "saved") {
     try {
       await loadLastMap();
-    } catch(error) {
+    } catch (error) {
       ERROR && console.error(error);
       WARN && console.warn("Cannot load stored map, random map to be generated");
       await generateMapOnLoad();
@@ -759,8 +761,8 @@ function placePoints() {
   const spacing = (grid.spacing = rn(Math.sqrt((graphWidth * graphHeight) / cellsDesired), 2)); // spacing between points before jirrering
   grid.boundary = getBoundaryPoints(graphWidth, graphHeight, spacing);
   grid.points = getJitteredGrid(graphWidth, graphHeight, spacing); // jittered square grid
-  grid.cellsX = Math.floor((graphWidth + 0.5 * spacing) / spacing);
-  grid.cellsY = Math.floor((graphHeight + 0.5 * spacing) / spacing);
+  grid.cellsX = Math.floor((graphWidth + 0.5 * spacing - 1e-10) / spacing);
+  grid.cellsY = Math.floor((graphHeight + 0.5 * spacing - 1e-10) / spacing);
   TIME && console.timeEnd("placePoints");
 }
 
@@ -826,6 +828,7 @@ function markupGridOcean() {
   TIME && console.timeEnd("markupGridOcean");
 }
 
+// Calculate cell-distance to coast for every cell
 function markup(cells, start, increment, limit) {
   for (let t = start, count = Infinity; count > 0 && t > limit; t += increment) {
     count = 0;
@@ -1617,14 +1620,17 @@ function addZones(number = 1) {
   }
 
   function addRebels() {
-    const state = ra(states.filter(s => s.i && s.neighbors.some(n => n)));
+    const state = ra(states.filter(s => s.i && !s.removed && s.neighbors.some(n => n)));
     if (!state) return;
 
-    const neib = ra(state.neighbors.filter(n => n));
-    const cell = cells.i.find(i => cells.state[i] === state.i && cells.c[i].some(c => cells.state[c] === neib));
-    const cellsArray = [],
-      queue = [cell],
-      power = rand(10, 30);
+    const neib = ra(state.neighbors.filter(n => n && !states[n].removed));
+    if (!neib) return;
+    const cell = cells.i.find(i => cells.state[i] === state.i && !state.removed && cells.c[i].some(c => cells.state[c] === neib));
+    const cellsArray = [];
+    const queue = [];
+    if (cell) queue.push(cell);
+
+    const power = rand(10, 30);
 
     while (queue.length) {
       const q = queue.shift();
