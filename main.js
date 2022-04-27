@@ -19,6 +19,9 @@ if (rn(localStorage.getItem("version"), 1) !== rn(version, 1)) {
   setTimeout(showWelcomeMessage, 8000);
 }
 
+let packages;
+import('./packages/registry.js').then(p => packages=p.default)
+
 // append svg layers (in default order)
 let svg = d3.select("#map");
 let defs = svg.select("#deftemp");
@@ -198,6 +201,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     await checkLoadParameters();
   }
   restoreDefaultEvents(); // apply default viewbox events
+  import('./packages/registry.js').then(p => p.default.startConsole())
 });
 
 function hideLoading() {
