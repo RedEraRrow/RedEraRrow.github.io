@@ -1,16 +1,21 @@
 "use strict";
-
-/*
-UI elements for submap generation
-*/
+// UI elements for submap generation
 
 window.UISubmap = (function () {
-  function openSubmapOptions() {
+  document.getElementById("submapPointsInput").addEventListener("input", function () {
+    const output = document.getElementById("submapPointsOutputFormatted");
+    const cells = cellsDensityMap[+this.value] || 1000;
+    this.dataset.cells = cells;
+    output.value = getCellsDensityValue(cells);
+    output.style.color = getCellsDensityColor(cells);
+  });
+
+  function openSubmapMenu() {
     $("#submapOptionsDialog").dialog({
-      title: "Submap options",
+      title: "Create a submap",
+      width: "30em",
       resizable: false,
-      width: fitContent(),
-      position: {my: "right top", at: "right-10 top+10", of: "svg", collision: "fit"},
+      position: {my: "center", at: "center", of: "svg"},
       buttons: {
         Submap: function () {
           $(this).dialog("close");
@@ -23,13 +28,21 @@ window.UISubmap = (function () {
     });
   }
 
-  function openRemapOptions() {
+  function openResampleMenu() {
     resetZoom(0);
-    $("#remapOptionsDialog").dialog({
-      title: "Resampler options",
+
+    document.getElementById("submapAngleInput").value = 0;
+    document.getElementById("submapAngleOutput").value = "0°";
+    document.getElementById("submapShiftX").value = 0;
+    document.getElementById("submapShiftY").value = 0;
+    document.getElementById("submapMirrorH").checked = false;
+    document.getElementById("submapMirrorV").checked = false;
+
+    $("#resampleDialog").dialog({
+      title: "Resample map",
+      width: "30em",
       resizable: false,
-      width: fitContent(),
-      position: {my: "right top", at: "right-10 top+10", of: "svg", collision: "fit"},
+      position: {my: "center", at: "center", of: "svg"},
       buttons: {
         Resample: function () {
           $(this).dialog("close");
@@ -42,17 +55,38 @@ window.UISubmap = (function () {
     });
   }
 
-  /* callbacks */
-
+  // Resample the whole map to different cell resolution or shape
   const resampleCurrentMap = debounce(function () {
-    // Resample the whole map to different cell resolution or shape
-    const cellNumId = Number(document.getElementById("submapPointsInput").value);
-    if (!cellsDensityConstants[cellNumId]) {
-      console.error("Unknown cell number!");
-      return;
-    }
-    changeCellsDensity(cellNumId);
     WARN && console.warn("Resampling current map");
+    const cellNumId = +document.getElementById("submapPointsInput").value;
+    if (!cellsDensityMap[cellNumId]) return console.error("Unknown cell number!");
+
+    const angle = (+document.getElementById("submapAngleInput").value / 180) * Math.PI;
+    const shiftX = +document.getElementById("submapShiftX").value;
+    const shiftY = +document.getElementById("submapShiftY").value;
+    const mirrorH = document.getElementById("submapMirrorH").checked;
+    const mirrorV = document.getElementById("submapMirrorV").checked;
+
+    const [cx, cy] = [graphWidth / 2, graphHeight / 2];
+    const rot = alfa => (x, y) => [(x - cx) * Math.cos(alfa) - (y - cy) * Math.sin(alfa) + cx, (y - cy) * Math.cos(alfa) + (x - cx) * Math.sin(alfa) + cy];
+    const shift = (dx, dy) => (x, y) => [x + dx, y + dy];
+    const flipH = (x, y) => [-x + 2 * cx, y];
+    const flipV = (x, y) => [x, -y + 2 * cy];
+    const app = (f, g) => (x, y) => f(...g(x, y));
+    const id = (x, y) => [x, y];
+
+    let projection = id;
+    let inverse = id;
+
+    if (angle) [projection, inverse] = [rot(angle), rot(-angle)];
+    if (shiftX || shiftY) {
+      projection = app(shift(shiftX, shiftY), projection);
+      inverse = app(inverse, shift(-shiftX, -shiftY));
+    }
+    if (mirrorH) [projection, inverse] = [app(flipH, projection), app(inverse, flipH)];
+    if (mirrorV) [projection, inverse] = [app(flipV, projection), app(inverse, flipV)];
+
+    changeCellsDensity(cellNumId);
     startResample({
       lockMarkers: false,
       lockBurgs: false,
@@ -61,18 +95,17 @@ window.UISubmap = (function () {
       promoteTowns: false,
       smoothHeightMap: false,
       rescaleStyles: false,
-      projection: (x, y) => [x, y],
-      inverse: (x, y) => [x, y]
+      projection,
+      inverse
     });
   }, 1000);
 
+  // Create submap from the current map. Submap limits defined by the current window size (canvas viewport)
   const generateSubmap = debounce(function () {
-    // Create submap from the current map
-    // submap limits defined by the current window size (canvas viewport)
-
     WARN && console.warn("Resampling current map");
     closeDialogs("#worldConfigurator, #options3d");
     const checked = id => Boolean(document.getElementById(id).checked);
+
     // Create projection func from current zoom extents
     const [[x0, y0], [x1, y1]] = getViewBoxExtent();
     const origScale = scale;
@@ -87,7 +120,7 @@ window.UISubmap = (function () {
       rescaleStyles: checked("submapRescaleStyles"),
       smoothHeightMap: scale > 2,
       inverse: (x, y) => [x / origScale + x0, y / origScale + y0],
-      projection: (x, y) => [(x - x0) * origScale, (y - y0) * origScale],
+      projection: (x, y) => [(x - x0) * origScale, (y - y0) * origScale]
     };
 
     // converting map position on the planet
@@ -108,17 +141,17 @@ window.UISubmap = (function () {
   }, 1000);
 
   async function startResample(options) {
-    // Do model changes with Submap.resample then do view changes if needed.
-    undraw();
+    // Do model changes with Submap.resample then do view changes if needed
     resetZoom(0);
     let oldstate = {
       grid: deepCopy(grid),
       pack: deepCopy(pack),
+      notes: deepCopy(notes),
       seed,
       graphWidth,
       graphHeight
     };
-
+    undraw();
     try {
       const oldScale = scale;
       await Submap.resample(oldstate, options);
@@ -137,7 +170,6 @@ window.UISubmap = (function () {
     oldstate = null; // destroy old state to free memory
 
     restoreLayers();
-    turnButtonOn("toggleMarkers");
     if (ThreeD.options.isOn) ThreeD.redraw();
     if ($("#worldConfigurator").is(":visible")) editWorld();
   }
@@ -146,17 +178,17 @@ window.UISubmap = (function () {
     // resize burgIcons
     const burgIcons = [...document.getElementById("burgIcons").querySelectorAll("g")];
     for (const bi of burgIcons) {
-      const newRadius = rn(minmax(bi.getAttribute('size') * scale, 0.2, 10), 2);
+      const newRadius = rn(minmax(bi.getAttribute("size") * scale, 0.2, 10), 2);
       changeRadius(newRadius, bi.id);
-      const swAttr = bi.attributes['stroke-width'];
+      const swAttr = bi.attributes["stroke-width"];
       swAttr.value = +swAttr.value * scale;
     }
 
     // burglabels
-    const burgLabels= [...document.getElementById("burgLabels").querySelectorAll("g")];
+    const burgLabels = [...document.getElementById("burgLabels").querySelectorAll("g")];
     for (const bl of burgLabels) {
-      const size = +bl.dataset['size'];
-      bl.dataset['size'] = Math.max(rn((size + size / scale) / 2, 2), 1) * scale;
+      const size = +bl.dataset["size"];
+      bl.dataset["size"] = Math.max(rn((size + size / scale) / 2, 2), 1) * scale;
     }
 
     // emblems
@@ -171,12 +203,12 @@ window.UISubmap = (function () {
     ERROR && console.error(error);
     clearMainTip();
 
-    alertMessage.innerHTML = `Map resampling failed :_(.
+    alertMessage.innerHTML = `Map resampling failed:
       <br>You may retry after clearing stored data or contact us at discord.
       <p id="errorBox">${parseError(error)}</p>`;
     $("#alert").dialog({
       resizable: false,
-      title: "Generation error",
+      title: "Resampling error",
       width: "32em",
       buttons: {
         Ok: function () {
@@ -187,5 +219,5 @@ window.UISubmap = (function () {
     });
   }
 
-  return {openSubmapOptions, openRemapOptions}
+  return {openSubmapMenu, openResampleMenu};
 })();
