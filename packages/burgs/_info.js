@@ -7,17 +7,30 @@ export default {
 
   generators: [
     {
-      name: "Legacy Burg Generator",
+      name: "legacyBurgs",
+      description: "proxy generator for legacy Burg structures",
+      requires: ['Cells', 'HeightMap', 'Water'],
+      uses: [],
+      provides: ['Burgs'],
       import: 'legacyState',
-      from: _ => import('./legacyBurgs.js'),
+      from: 'legacyBurgs.js',
+    },
+
+    {
+      name: "burgs",
+      description: "Standard Burg Generator",
+      requires: ['Cells'],
+      uses: ['HeightMap', 'Rivers', 'Water'],
+      provides: ['Burgs'],
+      import: 'default',
+      from: './standardBurgs.js', // relative to the package root
     },
   ],
 
   renderers: [
     {
-      name: "Legacy Burg Renderer",
-      import: 'render',
-      from: _ => import('./legacyBurgRenderer.js'),
+      name: "legacyBurgs",
+      from: './legacyBurgs.js',
     },
   ],
 

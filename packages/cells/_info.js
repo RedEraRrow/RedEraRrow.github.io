@@ -10,7 +10,7 @@ export default {
       name: "LegacyCells",
       info: "Legacy CellGrid Proxy for CellGrid API",
       import: 'grid',
-      from: _ => import('./legacyCells.js'),
+      from: './legacyCells.js',
     },
   ],
 
@@ -19,7 +19,7 @@ export default {
       name: "LegacyRenderer",
       info: "Legacy CellGrid Renderer. Not implemented.",
       import: 'render',
-      from: _ => import('./legacyRenderer.js'),
+      from: './legacyRenderer.js',
     },
   ],
 
