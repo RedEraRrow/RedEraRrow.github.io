@@ -1,3 +1,3 @@
-export const legacyState = {
+export default {
   burgs: pack.burgs
 }

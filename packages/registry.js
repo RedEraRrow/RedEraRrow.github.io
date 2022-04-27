@@ -1,37 +1,62 @@
 /*
 Package registry
 */
-import Burgs from './burgs/info.js'
-import CellGrid from './cells/info.js'
-import Roads from './roads/info.js'
+import Package from '../common/package.js'
 
-const packageList = [
-  Burgs,
-  CellGrid,
-  Roads,
+const packageDirs = [
+  'burgs',
+  'cells',
+  'routes',
 ]
-packageList.forEach(p => p._loaded = false)
 
-async function load(packageName) {
-  const p = packageList.find(x => x.name === packageName)
-  if (!p) throw new Error(`No such package: ${packageName}`)
-  const from = p.from ? p.from : `${packageName.toLowerCase()}/main.js`
-  const tab = p.import ? p.import : 'default'
-  const mod = await import(from)
-  p._loaded = true
-  return mod[tab]
-}
-
-const status = () => packageList.forEach(p=>console.log(`module ${p.name}: ${p._loaded? 'loaded': '-'}`))
+export const packages = {}
 const commands = {}
 
+// load all packages from packagesDirs,
+// do some sanity check
+export async function load(){
+  const res = await Promise.allSettled(packageDirs.map(d => import(`./${d}/_info.js`)))
+  res.forEach((r, i) => {
+    const path = packageDirs[i]
+    if (r.status === "rejected") {
+      console.warn(`Can not load module from ${path}.`, r.reason)
+      return
+    }
+
+    const pkg = r.value.default
+    if (!pkg) {
+      console.warn(`Package ${path}/_info.js must have a default export!`)
+      return
+    }
+
+    if (!pkg.name) {
+      console.warn(`Package ${path} must have a name property!`)
+      return
+    }
+
+    packages[pkg.name] = new Package(path, pkg)
+  })
+  // do whatever is need to be done after package init here
+  return packages
+}
+
 // Install FMG console to global namespace
-function startConsole() {
-  console.log("%cFMG console\n", "font-size:14px; background-color: green; text-align:center; color:black; padding:10px; width:100%")
+export function startConsole() {
+  console.log("%c🗺 FMG console\n", "font-size:14px; text-align:center; color:yellow; ")
   window.fmg = commands
   commands.help()
 }
 
+// global console command registration
+export function registerCommand(name, f, description) {
+  if (commands[name]) throw new Error('command already exists:', name, 'Registration rejected.')
+  commands[name] = f
+  commands[name].description = description
+}
+
+/*
+Register default global commands here
+*/
 function help() {
   for (const [cn, co] of Object.entries(commands)) {
     console.log(`%c${cn}\n%c${co.description}`,
@@ -40,17 +65,16 @@ function help() {
     )
   }
 }
-
-function registerCommand(name, f, description) {
-  if (commands[name]) throw new Error('command already exists:', name)
-  commands[name] = f
-  commands[name].description = description
-}
 registerCommand("help", help, "Show help about fmg commands")
 
-export default {
-  load,
-  list,
-  registerCommand,
-  startConsole,
+export async function renderer(packageName, rendererName) {
+  const pck = packages[packageName]
+  if (!pck) throw new Error("No such package in registry:", packageName)
+  return pck.loadRenderer(rendererName)
 }
+registerCommand("renderer", renderer, "Dynamically load renderer for a given package")
+
+const plist = () => Object.values(packages)
+  .forEach(p => console.log(
+    `${p.name} (rendr: ${p.renderers.length}, gens: ${p.generators.length})\n%c${p.description}`, "font-size:8px;"))
+registerCommand("plist", plist, "Show current status of packages")

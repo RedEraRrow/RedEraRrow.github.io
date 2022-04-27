@@ -20,7 +20,10 @@ if (rn(localStorage.getItem("version"), 1) !== rn(version, 1)) {
 }
 
 let packages;
-import('./packages/registry.js').then(p => packages=p.default)
+import('./packages/registry.js').then(async p => {
+  packages = p;
+  await p.load()
+})
 
 // append svg layers (in default order)
 let svg = d3.select("#map");
@@ -201,7 +204,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     await checkLoadParameters();
   }
   restoreDefaultEvents(); // apply default viewbox events
-  import('./packages/registry.js').then(p => p.default.startConsole())
+  import('./packages/registry.js').then(p => p.startConsole())
 });
 
 function hideLoading() {
