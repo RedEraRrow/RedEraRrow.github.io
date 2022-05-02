@@ -8,7 +8,7 @@ export default {
   generators: [
     {
       name: "legacyBurgs",
-      description: "proxy generator for legacy Burg structures",
+      info: "proxy generator for legacy Burg structures",
       requires: ['Cells', 'HeightMap', 'Water'],
       uses: [],
       provides: ['Burgs'],
@@ -18,7 +18,7 @@ export default {
 
     {
       name: "burgs",
-      description: "Standard Burg Generator",
+      info: "Standard Burg Generator",
       requires: ['Cells'],
       uses: ['HeightMap', 'Rivers', 'Water'],
       provides: ['Burgs'],

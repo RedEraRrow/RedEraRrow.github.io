@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <title>FMG lib test page</title>
+  </head>
+  <body>
+    run tests
+    <ol id="tests">
+    </ol>
+  </body>
+  <script>
+
+    const tests = [
+      'flags',
+    ]
+
+    const list = document.getElementById('tests')
+
+    const linkLine = (txt, f) => {
+      const link = document.createElement('a')
+      const li = document.createElement('li')
+      link.appendChild(document.createTextNode(txt))
+      link.addEventListener('click', f)
+      li.appendChild(link)
+      return li
+    }
+
+    tests.forEach(async t => {
+      const mod = (await import(`./${t}.js`)).default
+      const run = e => mod()
+      list.appendChild(linkLine(t, run))
+    })
+  </script>
+</html>

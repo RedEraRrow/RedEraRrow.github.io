@@ -11,7 +11,7 @@ export default {
   generators: [
     {
       name: "MultiRoads", // generator identifier
-      description: "Multi level road generator",
+      info: "Multi level road generator",
       requires: ['Cells'], // required data interfaces
       uses: ['HeightMap', 'Water', 'Biomes'], // optional data interfaces
       provides: ['Roads'], // provided data interfaces
@@ -20,7 +20,7 @@ export default {
     },
     {
       name: "LegacyRoads",
-      description: "Multi level road generator with legacy data injection",
+      info: "Multi level road generator with legacy data injection",
       requires: ['Cells'],
       uses: ['HeightMap', 'Water'],
       provides: ['Roads'],
@@ -32,7 +32,7 @@ export default {
   renderers: [
     {
       name: "LegacyRoads",
-      description: "This renderer renders to the legacy SVG object",
+      info: "This renderer renders to the legacy SVG object",
       import: 'render',
       from: './legacyRoadRenderer.js',
     },
