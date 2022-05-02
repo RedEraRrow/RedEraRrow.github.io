@@ -1,7 +1,7 @@
 import { FlagManager } from '../packages/cells/flags.js'
+import { LegacyFlagManager } from '../packages/cells/legacyFlags.js'
 
 const assert = console.assert
-
 
 function testFlagMap(fm) {
   // set green flag for all
@@ -65,7 +65,7 @@ function testFlagMap(fm) {
   assert(sameSet(real, check), "filterAll yellow is 5 and 9", fm, real, check, yellow)
 
   // this is same as filterAll(yellow|blue)
-  real = new Set(fm.filter(x => x & yellow && x & blue))
+  real = new Set(fm.filter(x => (x & yellow) && (x & blue)))
   check = new Set([5,6,7])
   assert(sameSet(real, check), "custom filter check", fm, real, check, yellow)
 
@@ -82,6 +82,7 @@ function testFlagMap(fm) {
 }
 
 export default _ =>  {
+  console.log('testing Flagmanager')
   let fm
   fm = new FlagManager(10)
   assert(fm.size === 10, fm)
@@ -96,9 +97,12 @@ export default _ =>  {
   for(let i=0; i<60; i++) fm.flag('flag' + i)
   testFlagMap(fm)
 
-  /*
+  // test legacy map
+  console.log('testing Legacy Flagmanager')
   const fmLegacy = new LegacyFlagManager(10)
   assert(fmLegacy.size === 10, "Size must be 10", fm)
+  fmLegacy.register('green', new Uint8Array(10))
+  fmLegacy.register('blue', new Uint8Array(10))
+  fmLegacy.register('red', new Uint8Array(10))
   testFlagMap(fmLegacy)
-  */
 }

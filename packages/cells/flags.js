@@ -39,7 +39,7 @@ export class FlagManager {
     if (this.flags[flagName] === undefined) return
     const mask = this.flag(flagName)
     this.clearAll(mask)
-    this.flags[flagName] = undefined
+    delete this.flags[flagName]
   }
 
   flag(flagName) {
