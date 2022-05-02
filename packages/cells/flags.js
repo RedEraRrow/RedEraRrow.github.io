@@ -16,55 +16,84 @@ const sea = fm.flag('sea')
 const river = fm.flag('river')
 for(id of fm.all(sea & river)) console.log('both', id)
 */
-class FlagManager {
+export class FlagManager {
   constructor(size) {
     this.size = size
     this.stripSize = 8
-    this.flagMap = Uint8Array(size)
+    this.flagMap = new Uint8Array(size)
     this.flags = {}
   }
 
   register(flagName) {
     /* Add new flag, return the flag*/
-    const flagNum = Object.keys(this.flags).length
-    if (flagNum > this.stripSize) this.resize()
-    const nextFlagMask = 1 << flagNum
-    this.flags[flagName] = nextFlagMask
-    return nextFlagMask
+    let nextFree = 0
+    const used = Object.values(this.flags)
+    while (used.includes(nextFree)) nextFree++
+    if (nextFree >= this.stripSize) this.resize()
+    this.flags[flagName] = nextFree
+    return this.flag(flagName)
+  }
+
+  remove(flagName) { // :void
+    /* remove the flag*/
+    if (this.flags[flagName] === undefined) return
+    const mask = this.flag(flagName)
+    this.clearAll(mask)
+    this.flags[flagName] = undefined
   }
 
   flag(flagName) {
     /* get the desired flag mask */
-    const mask = this.flags[flagName]
-    return mask ? mask : this.register(flagName)
+    if (this.flags[flagName] === undefined) return this.register(flagName)
+    return this.stripSize === 64
+      ? 1n << BigInt(this.flags[flagName])
+      : 1 << this.flags[flagName]
   }
 
-  set(mask, id) {
-    this.flagsMap[id] &= mask
+  set(mask, ...ids) {
+    for (const id of ids) this.flagMap[id] |= mask
   }
 
-  clear(mask, id) {
-    this.flagsMap[id] &= ~mask
+  setAll(mask) {
+    for (let i=0; i<this.size; i++) this.flagMap[i] |= mask
   }
 
-  hasSome(mask) {
-    return id => this.flagMap[id] & mask
+  clear(mask, ...ids) {
+    for (const id of ids) {
+      this.flagMap[id] &= ~mask
+    }
+  }
+
+  clearAll(mask) {
+    for (let i=0; i<this.size; i++) this.flagMap[i] &= ~mask
+  }
+
+  /* ------------------ tests ------------------- */
+  has(mask) {
+    return id => this.flagMap[id] && (this.flagMap[id] & mask)
   }
 
   hasAll(mask) {
-    return id => this.flagMap[id] & mask === mask
+    return id => this.flagMap[id] && (this.flagMap[id] & mask) === mask
   }
 
   hasNot(mask) {
-    return id => !(~this.flagMap[id] & mask)
+    return id => this.flagMap[id] && !(~this.flagMap[id] & mask)
   }
 
-  *filterAny(mask) {
-    this.flagsMap.forEach((v, i) => { if(v & mask) yield i })
+  * filterAny(mask) {
+    for (let c=0; c<this.size; c++)
+      if (this.flagMap[c] & mask) yield c
   }
 
-  *filterAll(mask) {
-    this.flagsMap.forEach((v, i) => { if(v & mask === mask) yield i })
+  * filterAll(mask) {
+    for (let c=0; c<this.size; c++)
+      if ((this.flagMap[c] & mask) === mask) yield c
+  }
+
+  * filter(f) {
+    for (let c=0; c<this.size; c++)
+      if (f(this.flagMap[c])) yield c
   }
 
   resize() {
@@ -75,19 +104,22 @@ class FlagManager {
       64: BigUint64Array,
     }
 
-    this.stripSize = this.stripSize << 1
+    this.stripSize = this.stripSize * 2
     const newType = stripTypes[this.stripSize]
     if (! newType)
       throw new Error("Maximum flag number reached. Flag registration rejected.")
 
     const newFlags = new newType(this.size)
-    this.flagMap.forEach((v,i) => newFlags[i] = v)
+    if (this.stripSize >= 64)
+      this.flagMap.forEach((v,i) => newFlags[i] = BigInt(v))
+    else
+      this.flagMap.forEach((v,i) => newFlags[i] = v)
     this.flagMap = newFlags
   }
 }
 
 
-class LegacyFlagManager {
+export class LegacyFlagManager {
   constructor(size) {
     this.size = size
     this.flags = {}
@@ -132,13 +164,6 @@ class LegacyFlagManager {
     return reduce((cont, s) => s[id] && cont, storages, false)
   }
 
-  *any(mask) {
-    this.flagsMap.forEach((v, i) => { if(v & mask) yield i })
-  }
-
-  *all(mask) {
-    this.flagsMap.forEach((v, i) => { if(v & mask === mask) yield i })
-  }
 
   resize() {
     /* resize internal bitmap if required */

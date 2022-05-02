@@ -14,7 +14,7 @@ const commands = {}
 
 // load all packages from packagesDirs,
 // do some sanity check
-export async function load(){
+export async function load() {
   const res = await Promise.allSettled(packageDirs.map(d => import(`./${d}/_info.js`)))
   res.forEach((r, i) => {
     const path = packageDirs[i]
@@ -40,7 +40,9 @@ export async function load(){
   return packages
 }
 
-// Install FMG console to global namespace
+// Install FMG console to global namespace.
+// for now, all comands namespaced with "fmg" to avoid clash with legacy
+// functions. Can be moved to window in the future.
 export function startConsole() {
   console.log("%c🗺 FMG console\n", "font-size:14px; text-align:center; color:yellow; ")
   window.fmg = commands
@@ -57,7 +59,7 @@ export function registerCommand(name, f, description) {
 /*
 Register default global commands here
 */
-function help() {
+function fhelp() {
   for (const [cn, co] of Object.entries(commands)) {
     console.log(`%c${cn}\n%c${co.description}`,
       "font-size:12px; font-weight:bold;",
@@ -65,7 +67,7 @@ function help() {
     )
   }
 }
-registerCommand("help", help, "Show help about fmg commands")
+registerCommand("fhelp", fhelp, "Show help about fmg commands")
 
 export async function renderer(packageName, rendererName) {
   const pck = packages[packageName]
