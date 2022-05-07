@@ -16,6 +16,7 @@ const sea = fm.flag('sea')
 const river = fm.flag('river')
 for(id of fm.all(sea & river)) console.log('both', id)
 */
+
 export class FlagManager {
   constructor(size) {
     this.size = size

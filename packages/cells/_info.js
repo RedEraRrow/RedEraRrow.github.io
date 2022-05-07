@@ -1,5 +1,5 @@
 export default {
-  name: "Cells",
+  name: "CellGrid",
   description: `
     Cell is a object representing smallest unit of area storing
     neighborhood information to other cells. CellGrid is a set of connected
@@ -14,8 +14,10 @@ export default {
       requires: [],
       uses: ['Cells'], // Cells can update itself
       provides: ['Burgs'],
-      import: 'grid',
-      from: './legacyCells.js',
+      src: {
+        import: 'grid',
+        from: './legacyCells.js',
+      }
     },
   ],
 
@@ -23,8 +25,10 @@ export default {
     {
       name: "LegacyRenderer",
       info: "Legacy CellGrid Renderer. Not implemented.",
-      import: 'render',
-      from: './legacyRenderer.js',
+      src: {
+        import: 'render',
+        from: './legacyRenderer.js',
+      }
     },
   ],
 

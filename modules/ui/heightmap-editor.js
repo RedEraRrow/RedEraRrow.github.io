@@ -133,7 +133,7 @@ function editHeightmap() {
 
   // Exit customization mode
   function finalizeHeightmap() {
-    if (viewbox.select("#heights").selectAll("*").size() < 200)
+    if (viewbox.select("#heights").selectAll("*").size() < 2)
       return tip("Insufficient land area! There should be at least 200 land cells to finalize the heightmap", null, "error");
     if (document.getElementById("imageConverter").offsetParent) return tip("Please exit the Image Conversion mode first", null, "error");
 
@@ -1248,9 +1248,9 @@ function editHeightmap() {
       event.preventDefault();
       event.stopPropagation();
       alertMessage.innerHTML = `
-        Are you sure you want to close the Image Converter? 
-        Click "Cancel" to geck back to convertion. 
-        Click "Complete" to apply the conversion. 
+        Are you sure you want to close the Image Converter?
+        Click "Cancel" to geck back to convertion.
+        Click "Complete" to apply the conversion.
         Click "Close" to exit conversion mode and restore previous heightmap`;
 
       $("#alert").dialog({

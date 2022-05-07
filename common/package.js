@@ -16,8 +16,8 @@ export default class Package {
   async loadRenderer(name) {
     const rend = this.renderers.find(x => x.name === name)
     if (!rend) throw new Error(`No such renderer in ${this.name}: ${name}`)
-    const from = rend.from ? rend.from : `${name.toLowerCase()}/main.js`
-    const tab = rend.import ? rend.import : 'default'
+    const from = rend?.src.from ? rend.src.from : `renderers/${name}.js`
+    const tab = rend?.src.import ? rend.src.import : 'default'
     const mod = await import(`../packages/${this._path}/${from}`)
     return mod[tab]
   }
@@ -25,8 +25,8 @@ export default class Package {
   async loadGenerator(name) {
     const gen = this.generators.find(x => x.name === name)
     if (!gen) throw new Error(`No such generator in ${this.name}: ${name}`)
-    const from = gen.from ? gen.from : `${name.toLowerCase()}/main.js`
-    const tab = gen.import ? gen.import : 'default'
+    const from = gen?.src.from ? gen.src.from : `generators/${name}.js`
+    const tab = gen?.src.import ? gen.src.import : 'default'
     const mod = await import(`../${this._path}/${from}`)
     return mod[tab]
   }

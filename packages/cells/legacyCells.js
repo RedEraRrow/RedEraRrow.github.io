@@ -4,7 +4,7 @@ Proxy CellGrid Generator for legacy data structures
 
 import { grid, pack } from '../../common/legacy.js'
 
-export legacyCellGrid = {
+legacyCellGrid = {
 
     map(f) {
       return pack.cells.map(c => f(Object.create(protoCell, {id: c})))
@@ -40,4 +40,6 @@ export legacyCellGrid = {
 
 }
 
+// generators must be factory functions
+// (this one is a Singleton)
 export default _ => legacyCellGrid

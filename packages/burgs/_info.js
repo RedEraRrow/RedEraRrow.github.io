@@ -12,8 +12,10 @@ export default {
       requires: ['Cells', 'HeightMap', 'Water'],
       uses: [],
       provides: ['Burgs'],
-      import: 'legacyState',
-      from: 'legacyBurgs.js',
+      src: {
+        import: 'legacyState',
+        from: 'legacyBurgs.js',
+      }
     },
 
     {
@@ -22,8 +24,10 @@ export default {
       requires: ['Cells'],
       uses: ['HeightMap', 'Rivers', 'Water'],
       provides: ['Burgs'],
-      import: 'default',
-      from: './standardBurgs.js', // relative to the package root
+      src: {
+        import: 'default',
+        from: './standardBurgs.js', // relative to the package root
+      }
     },
   ],
 
