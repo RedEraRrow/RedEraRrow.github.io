@@ -1244,7 +1244,7 @@
               <td></td>
               <td>Points number</td>
               <td>
-                <input id="pointsInput" type="range" min="1" max="13" value="4" data-cells="10000" />
+                <input id="pointsInput" type="range" min="1" max="14" value="4" data-cells="10000" />
               </td>
               <td>
                 <output id="pointsOutputFormatted" style="color: #053305">10K</output>
@@ -1869,7 +1869,10 @@
           <script>
             const dlbtn = document.getElementById('downloadData')
             dlbtn.addEventListener('click', function(){
-              const jsonStr = JSON.stringify( {pack, grid}, function( key, value ){
+              const data = {
+                pack, grid, notes, biomesData, nameBases, scale,
+              }
+              const jsonStr = JSON.stringify( data, function( key, value ){
                 if ( value instanceof Int8Array         ||
                      value instanceof Uint8Array        ||
                      value instanceof Uint8ClampedArray ||
