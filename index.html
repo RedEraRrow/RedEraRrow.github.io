@@ -1865,6 +1865,32 @@
           <button id="saveButton" data-tip="Save fully-functional map in .map format">Save</button>
           <button id="loadButton" data-tip="Load fully-functional map in .map format">Load</button>
           <button id="zoomReset" data-tip="Reset map zoom. Shortcut: 0">Reset Zoom</button>
+          <a id='downloadData' download='Download.json' type='text/csv'>dl</a>
+          <script>
+            const dlbtn = document.getElementById('downloadData')
+            dlbtn.addEventListener('click', function(){
+              const jsonStr = JSON.stringify( {pack, grid}, function( key, value ){
+                if ( value instanceof Int8Array         ||
+                     value instanceof Uint8Array        ||
+                     value instanceof Uint8ClampedArray ||
+                     value instanceof Int16Array        ||
+                     value instanceof Uint16Array       ||
+                     value instanceof Int32Array        ||
+                     value instanceof Uint32Array       ||
+                     value instanceof Float32Array      ||
+                     value instanceof Float64Array       )
+                {
+                  return {
+                    constructor: value.constructor.name,
+                    data: Array.apply([], value),
+                    flag: "TypedArray"
+                  }
+                }
+                return value;
+              });
+              dlbtn.href = URL.createObjectURL(new Blob([jsonStr]));
+            })
+          </script>
         </div>
       </div>
     </div>
