@@ -1,4 +1,6 @@
 
+import PriorityQueue from './FastPriorityQueue.js'
+import BitSet from './TypedFastBitSet.js'
 
 /*
 Utility class to help extend CellGrids with new API
@@ -16,9 +18,16 @@ class GridBuilder {
     // replace baseCell with another using the extended API
     this.grid.baseCell = new oldGrid.baseCell.constructor()
     Object.assign(this.grid.baseCell, oldGrid.baseCell)
+
+    // replace maps with new object
+    this.grid.maps = { ...oldGrid.maps }
+
+    // replace flags with new object
+    this.grid.maps = { ...oldGrid.flags }
   }
 
-  registerCellProp(propName, f) {
+  // Add generic cell property (function getter)
+  addCellProp(propName, f) {
     // register new property accessor of type Id => Any
     if (Object.keys(this.grid.baseCell).includes(propName))
       throw new Error(`${propName} already registered`)
@@ -30,119 +39,137 @@ class GridBuilder {
     return this
   }
 
-  registerCellFlag(flagName) {
-    if (!this.grid.flagManager) throw new Error('Grid has no flagmanager!')
-    this.grid.flagManager.register(flagName)
-    this.grid.registerCellProp(flagName, this.grid.flagManager.has(flagName))
+  // register new bitset for the grid and add it to the cell as prop
+  // initialized by iterable returning cellIds where the flag is true
+  addCellFlag(flagName, iterable) {
+    if (this.grid.flags[flagName])
+      throw new Error(`Flag ${flagName} is already exist in grid.`)
+    this.grid.flags[flagName] = new BitSet(iterable)
+    f = function() { return this.grid.flags[flagName].has(this.id)}
+    this.addCellProp(flagName, Object.bind(f, this.grid.baseCell))
+    return this
+  }
+
+  // Register indexed map for cells.
+  // mapArray must be indexable by CellId
+  addCellMap(mapName, mapArray) {
+    this.grid.maps[mapName] = mapArray
+    this.grid.addCellProp(mapName, cid => this.grid.maps[mapName][cid])
     return this
   }
 
   // after modifying the grid make it immutable with freeze. eg:
-  // const newCellGrid = new FlagManager(oldGrid)
+  // const newCellGrid = new GridBuilder(oldCellGrid)
   //    .addCellProp('road', getRoadFunction)
   //    .addCellFlag('hasRoad')
+  //    .addCellFlag('hasCrossings')
   //    .freeze()
   freeze() {
+    Object.freeze(this.grid.flags)
+    Object.freeze(this.grid.maps)
     Object.freeze(this.grid.baseCell)
     return Object.freeze(this.grid)
   }
 }
 
-class AbstractCellGrid {
-  /* CellGrid factory
-  return a shallow copy of the old cellgrid replacing it's baseCell
-  with an upgraded one effectively extending its API.
-  */
-  static extend(oldGrid, extension) { // <-- kell az extension???
-    if (!oldGrid.baseCell)
-      throw new Error("Invalid CellGrid. baseCell property required.")
-
-
-    const [a, b] = new Set(Object.keys(oldGrid.baseCell)), new Set(Object.keys(extension))
-    if ([...a].find(e => b.has(e)))
-      throw new Error("baseCell can not be extended with existing props: ", grid.baseCell, extension)
-
-    // create copy of the old grid (only enumerable props are copied!)
-    // setting prototype is also possible but less performant
-    const newGrid = new oldGrid.constructor()
-    Object.assign(grid,  oldGrid)
-
-    // replace baseCell with another using the extended API
-    newGrid.baseCell = new oldGrid.baseCell.constructor()
-    Object.assign(newGrid.baseCell, extension)
-
-    return newGrid
-  }
-
+export class AbstractCellGrid {
   constructor() {
     this.baseCell = new BaseCell(this)
-    this.flagManager = undefined // must be implemented in derived class
+    this.maps = {}
   }
 
-  byId(id) {
-    return Object.create({ id }, this.baseCell)
+  getMap(mapName) {
+    if (!this.maps[mapName]) throw new Error(`Unknown map ${mapName} in Grid`)
+    return this.maps[mapName]
   }
 
-  registerCellProp(propName, f) {
-    // register new property accessor of type Id => Any
-    if (Object.keys(this.baseCell).includes(propName))
-      throw new Error(`${propName} already registered`)
-
-    Object.defineProperty(this.baseCell, propName, {
-        enumerable: true,
-        get: f,
-    })
-    return this
+  mapOn(mapName, f) {
+    return this.maps[mapName].map(f)
   }
 
-  registerCellFlag(flagName) {
-    if (!flagManager) throw new Error('Grid has no flagmanager!')
-    this.flagManager.register(flagName)
-    this.registerCellProp(flagName, this.flagManager.has(flagName))
-    return this
+  // access cell by id/reference
+  cell(id) {
+    return Object.create(this.baseCell, { id: { value: id, enumerable: true } })
   }
 
-  // after modifying the grid make it immutable with freeze. eg:
-  // const newCellGrid = CellGrid.extend(oldGrid)
-  //    .addCellProp('road', getRoadFunction)
-  //    .addCellFlag('hasRoad')
-  //    .freeze()
-  freeze() {
-    Object.freeze(this.baseCell)
-    return Object.freeze(this)
+  // find cell by coordinate
+  cellAt(x, y) {
+    throw new Error('cellAt not implemented!')
+  }
+
+  // find neighboring cells of a given cell
+  // Cell can be an object or an id.
+  // returns an iterable
+  neighborsOf(cell) {
+    if (typeof cell !== 'number') id = cell.id
+    throw new Error('neighborsOf not implemented!')
+  }
+
+  // Iterate along rings around a specific cell,
+  // starting with ring0 which is the cell itself.
+  // Cell can be an object or an id.
+  // iteration stops after max rings.
+  // next(true) can be called to skip the previous cell's neighbors
+  * rings(cell, max=3) {  // -> Iterator<Iterator<Cell>>
+    if (typeof cell === 'number') cell = this.cell(cell)
+    let cells = new Set(cell)
+    let prevCells = new Set()
+    for (ring = 0; ring < max; ring++) {
+      let nextCells = new Set()
+      for (c of cells) {
+        const ret = yield { ring, cell: c }
+        if (! ret)
+          for (c of this.neighborsOf(cell))
+            if (! (prevCells.has(c) || cells.has(c)))
+              nextCells.add(c)
+      }
+      prevCells = cells
+      cells = nextCells
+    }
+  }
+
+  // find best cell based on a weight function w.
+  // w has a type: Cell => Comparable<T>
+  findBestAt(w){
+    return cell => { throw new Error('TODO') }
+  }
+  // find chain of cells from source to target weighted by w
+  // weight must return a weight for an edge (tuple of neighboring cells)
+  findPath(source, target, w=(s,t)=>1) {
+    prio = new PriorityQueue((a,b) => a.w > b.w)
+    throw new Error('TODO')
   }
 
   // filter values by f in the first ring around centerId,
   // if it's empty use the next ring and so on up tu max
-  findNearest: (f, max=3) => centerId => {
-    if (max<1) return [];
-    const used = new Set([centerId]);
-    const propers = id => cells.c[id].filter(c=>!used.has(c).filter(f)
-    const ring = Array.isArray(centerId)
-      ? centerId.map(c => propers(c)).flat();
-      : propers(centerId);
-    if (ring.length) return valid;
-    return findNearest(f, max-1)(ring)
-  },
-
+  findNearest(f, max=3) {
+    return centerId => {
+      if (max<1) return [];
+      const used = new Set([centerId]);
+      const propers = id => cells.c[id].filter(c=>!used.has(c).filter(f))
+      const ring = Array.isArray(centerId)
+        ? centerId.map(c => propers(c)).flat()
+        : propers(centerId);
+      if (ring.length) return valid;
+      return findNearest(f, max-1)(ring)
+    }
+  }
 }
 
-class BaseCell() {
+class BaseCell {
   constructor(grid) {
-    // this.id = // Must be added by the CellGrid implementation
-    this.neighbors = function* () {} // null generator, replace it!
+    // this.id =
     this.grid = grid
   }
 
-  neighbors() {
-    return this.grid.findNearest(this.id)
+  get neighbors() {
+    return this.grid.neighborsOf(this.id)
   }
 }
 
-class CellGrid extends AbstractCellGrid {
+export class CellGrid extends AbstractCellGrid {
   constructor(cellNumber) {
     super()
     this.grid = [] // create voronoi
-    this.flagManager = new FlagManager()
   }
 }

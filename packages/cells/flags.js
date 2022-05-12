@@ -14,7 +14,7 @@ fm.set(river, 110)
 ...later
 const sea = fm.flag('sea')
 const river = fm.flag('river')
-for(id of fm.all(sea & river)) console.log('both', id)
+for(id of fm.all(sea | river)) console.log('both', id)
 */
 
 export class FlagManager {
