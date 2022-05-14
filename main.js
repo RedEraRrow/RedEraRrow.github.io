@@ -2,10 +2,7 @@
 // https://github.com/Azgaar/Fantasy-Map-Generator
 
 "use strict";
-const version = "1.8"; // generator version
-document.title += " v" + version;
-
-// switches to disable/enable logging features
+// set debug options
 const PRODUCTION = location.hostname && location.hostname !== "localhost" && location.hostname !== "127.0.0.1";
 const DEBUG = localStorage.getItem("debug");
 const INFO = DEBUG || !PRODUCTION;
@@ -13,10 +10,13 @@ const TIME = DEBUG || !PRODUCTION;
 const WARN = true;
 const ERROR = true;
 
-// if map version is not stored, clear localStorage and show a message
-if (rn(localStorage.getItem("version"), 1) !== rn(version, 1)) {
-  localStorage.clear();
-  setTimeout(showWelcomeMessage, 8000);
+// register service worker responsible for caching
+if (PRODUCTION && "serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("./sw.js").catch(err => {
+      console.error("ServiceWorker registration failed: ", err);
+    });
+  });
 }
 
 let packages;
@@ -137,20 +137,21 @@ let scale = 1;
 let viewX = 0;
 let viewY = 0;
 
-const zoomThrottled = throttle(doWorkOnZoom, 100);
-function zoomed() {
+function onZoom() {
   const {k, x, y} = d3.event.transform;
 
   const isScaleChanged = Boolean(scale - k);
   const isPositionChanged = Boolean(viewX - x || viewY - y);
+  if (!isScaleChanged && !isPositionChanged) return;
 
   scale = k;
   viewX = x;
   viewY = y;
 
-  zoomThrottled(isScaleChanged, isPositionChanged);
+  handleZoom(isScaleChanged, isPositionChanged);
 }
-const zoom = d3.zoom().scaleExtent([1, 20]).on("zoom", zoomed);
+const onZoomDebouced = debounce(onZoom, 50);
+const zoom = d3.zoom().scaleExtent([1, 20]).on("zoom", onZoomDebouced);
 
 // default options
 let options = {
@@ -182,8 +183,8 @@ oceanLayers.append("rect").attr("id", "oceanBase").attr("x", 0).attr("y", 0).att
 document.addEventListener("DOMContentLoaded", async () => {
   if (!location.hostname) {
     const wiki = "https://github.com/Azgaar/Fantasy-Map-Generator/wiki/Run-FMG-locally";
-    alertMessage.innerHTML = `Fantasy Map Generator cannot run serverless.
-    Follow the <a href="${wiki}" target="_blank">instructions</a> on how you can easily run a local web-server`;
+    alertMessage.innerHTML = /* html */ `Fantasy Map Generator cannot run serverless. Follow the <a href="${wiki}" target="_blank">instructions</a> on how you can
+      easily run a local web-server`;
 
     $("#alert").dialog({
       resizable: false,
@@ -456,44 +457,17 @@ function applyDefaultBiomesSystem() {
   return {i: d3.range(0, name.length), name, color, biomesMartix, habitability, iconsDensity, icons, cost};
 }
 
-function showWelcomeMessage() {
-  const changelog = link("https://github.com/Azgaar/Fantasy-Map-Generator/wiki/Changelog", "previous versions");
-  const reddit = link("https://www.reddit.com/r/FantasyMapGenerator", "Reddit community");
-  const discord = link("https://discordapp.com/invite/X7E84HU", "Discord server");
-  const patreon = link("https://www.patreon.com/azgaar", "Patreon");
+let optimizedQuality = false;
 
-  alertMessage.innerHTML = `The Fantasy Map Generator is updated up to version <strong>${version}</strong>.
-    This version is compatible with ${changelog}, loaded <i>.map</i> files will be auto-updated.
-    <ul><strong>Latest changes:</strong>
-      <li>Submap tool by Goteguru</li>
-      <li>Resample tool by Goteguru</li>
-      <li>Pre-defined heightmaps</li>
-      <li>Advanced notes editor</li>
-      <li>Zones editor: filter by type</li>
-      <li>Color picker: new hatchings</li>
-      <li>New style presets: Cyberpunk and Atlas</li>
-      <li>Burg temperature graph</li>
-      <li>4 new textures</li>
-    </ul>
+function handleZoom(isScaleChanged, isPositionChanged) {
+  if (!optimizedQuality) {
+    setRendering("optimizeSpeed");
+    setTimeout(() => {
+      optimizedQuality = false;
+      setRendering(shapeRendering.value);
+    }, 1000);
+  }
 
-    <p>Join our ${discord} and ${reddit} to ask questions, share maps, discuss the Generator and Worlbuilding, report bugs and propose new features.</p>
-    <span><i>Thanks for all supporters on ${patreon}!</i></span>`;
-
-  $("#alert").dialog({
-    resizable: false,
-    title: "Fantasy Map Generator update",
-    width: "28em",
-    buttons: {
-      OK: function () {
-        $(this).dialog("close");
-      }
-    },
-    position: {my: "center center-4em", at: "center", of: "svg"},
-    close: () => localStorage.setItem("version", version)
-  });
-}
-
-function doWorkOnZoom(isScaleChanged, isPositionChanged) {
   viewbox.attr("transform", `translate(${viewX} ${viewY}) scale(${scale})`);
 
   if (isPositionChanged) drawCoordinates();
@@ -720,8 +694,7 @@ async function generate() {
     const parsedError = parseError(error);
     clearMainTip();
 
-    alertMessage.innerHTML = `An error has occurred on map generation. Please retry.
-      <br>If error is critical, clear the stored data and try again.
+    alertMessage.innerHTML = /* html */ `An error has occurred on map generation. Please retry. <br />If error is critical, clear the stored data and try again.
       <p id="errorBox">${parsedError}</p>`;
     $("#alert").dialog({
       resizable: false,

@@ -84,22 +84,37 @@ function editCultures() {
 
       if (!c.i) {
         // Uncultured (neutral) line
-        lines += `<div class="states" data-id=${c.i} data-name="${c.name}" data-color="" data-cells=${c.cells}
-        data-area=${area} data-population=${population} data-base=${c.base} data-type="" data-expansionism="" data-emblems="${c.shield}">
+        lines += /* html */ `<div
+          class="states"
+          data-id=${c.i}
+          data-name="${c.name}"
+          data-color=""
+          data-cells=${c.cells}
+          data-area=${area}
+          data-population=${population}
+          data-base=${c.base}
+          data-type=""
+          data-expansionism=""
+          data-emblems="${c.shield}"
+        >
           <svg width="9" height="9" class="placeholder"></svg>
-          <input data-tip="Neutral culture name. Click and type to change" class="cultureName italic" value="${c.name}" autocorrect="off" spellcheck="false">
+          <input data-tip="Neutral culture name. Click and type to change" class="cultureName italic" value="${c.name}" autocorrect="off" spellcheck="false" />
           <span class="icon-cw placeholder"></span>
           <span data-tip="Cells count" class="icon-check-empty hide"></span>
           <div data-tip="Cells count" class="stateCells hide">${c.cells}</div>
           <span class="icon-resize-full placeholder hide"></span>
-          <input class="statePower placeholder hide" type="number">
-          <select class="cultureType placeholder">${getTypeOptions(c.type)}</select>
+          <input class="statePower placeholder hide" type="number" />
+          <select class="cultureType placeholder">
+            ${getTypeOptions(c.type)}
+          </select>
           <span data-tip="Culture area" style="padding-right: 4px" class="icon-map-o hide"></span>
           <div data-tip="Culture area" class="biomeArea hide">${si(area) + unit}</div>
           <span data-tip="${populationTip}" class="icon-male hide"></span>
           <div data-tip="${populationTip}" class="culturePopulation hide">${si(population)}</div>
           <span data-tip="Click to re-generate names for burgs with this culture assigned" class="icon-arrows-cw hide"></span>
-          <select data-tip="Culture namesbase. Click to change. Click on arrows to re-generate names" class="cultureBase">${getBaseOptions(c.base)}</select>
+          <select data-tip="Culture namesbase. Click to change. Click on arrows to re-generate names" class="cultureBase">
+            ${getBaseOptions(c.base)}
+          </select>
           ${
             selectShape
               ? `<select data-tip="Emblem shape associated with culture. Click to change" class="cultureShape hide">${getShapeOptions(c.shield)}</select>`
@@ -109,24 +124,45 @@ function editCultures() {
         continue;
       }
 
-      lines += `<div class="states cultures" data-id=${c.i} data-name="${c.name}" data-color="${c.color}" data-cells=${c.cells}
-      data-area=${area} data-population=${population} data-base=${c.base} data-type=${c.type} data-expansionism=${c.expansionism} data-emblems="${c.shield}">
+      lines += /* html */ `<div
+        class="states cultures"
+        data-id=${c.i}
+        data-name="${c.name}"
+        data-color="${c.color}"
+        data-cells=${c.cells}
+        data-area=${area}
+        data-population=${population}
+        data-base=${c.base}
+        data-type=${c.type}
+        data-expansionism=${c.expansionism}
+        data-emblems="${c.shield}"
+      >
         <fill-box fill="${c.color}"></fill-box>
-        <input data-tip="Culture name. Click and type to change" class="cultureName" value="${c.name}" autocorrect="off" spellcheck="false">
+        <input data-tip="Culture name. Click and type to change" class="cultureName" value="${c.name}" autocorrect="off" spellcheck="false" />
         <span data-tip="Regenerate culture name" class="icon-cw hiddenIcon" style="visibility: hidden"></span>
         <span data-tip="Cells count" class="icon-check-empty hide"></span>
         <div data-tip="Cells count" class="stateCells hide">${c.cells}</div>
         <span data-tip="Culture expansionism. Defines competitive size" class="icon-resize-full hide"></span>
-        <input data-tip="Culture expansionism. Defines competitive size. Click to change, then click Recalculate to apply change" class="statePower hide" type="number" min=0 max=99 step=.1 value=${
-          c.expansionism
-        }>
-        <select data-tip="Culture type. Defines growth model. Click to change" class="cultureType">${getTypeOptions(c.type)}</select>
+        <input
+          data-tip="Culture expansionism. Defines competitive size. Click to change, then click Recalculate to apply change"
+          class="statePower hide"
+          type="number"
+          min="0"
+          max="99"
+          step=".1"
+          value=${c.expansionism}
+        />
+        <select data-tip="Culture type. Defines growth model. Click to change" class="cultureType">
+          ${getTypeOptions(c.type)}
+        </select>
         <span data-tip="Culture area" style="padding-right: 4px" class="icon-map-o hide"></span>
         <div data-tip="Culture area" class="biomeArea hide">${si(area) + unit}</div>
         <span data-tip="${populationTip}" class="icon-male hide"></span>
         <div data-tip="${populationTip}" class="culturePopulation hide">${si(population)}</div>
         <span data-tip="Click to re-generate names for burgs with this culture assigned" class="icon-arrows-cw hide"></span>
-        <select data-tip="Culture namesbase. Click to change. Click on arrows to re-generate names" class="cultureBase">${getBaseOptions(c.base)}</select>
+        <select data-tip="Culture namesbase. Click to change. Click on arrows to re-generate names" class="cultureBase">
+          ${getBaseOptions(c.base)}
+        </select>
         ${
           selectShape
             ? `<select data-tip="Emblem shape associated with culture. Click to change" class="cultureShape hide">${getShapeOptions(c.shield)}</select>`
@@ -200,7 +236,7 @@ function editCultures() {
       const rural = c.rural * populationRate;
       const urban = c.urban * populationRate * urbanization;
       const population = rural + urban > 0 ? si(rn(rural + urban)) + " people" : "Extinct";
-      info.innerHTML = `${c.name} culture. ${c.type}. ${population}`;
+      info.innerHTML = /* html */ `${c.name} culture. ${c.type}. ${population}`;
       tip("Drag to change parent, drag to itself to move to the top level. Hold CTRL and click to change abbreviation");
     }
 
@@ -347,10 +383,9 @@ function editCultures() {
     const l = n => Number(n).toLocaleString();
     const burgs = pack.burgs.filter(b => !b.removed && b.culture === culture);
 
-    alertMessage.innerHTML = `
-    Rural: <input type="number" min=0 step=1 id="ruralPop" value=${rural} style="width:6em">
-    Urban: <input type="number" min=0 step=1 id="urbanPop" value=${urban} style="width:6em" ${burgs.length ? "" : "disabled"}>
-    <p>Total population: ${l(total)} ⇒ <span id="totalPop">${l(total)}</span> (<span id="totalPopPerc">100</span>%)</p>`;
+    alertMessage.innerHTML = /* html */ ` Rural: <input type="number" min="0" step="1" id="ruralPop" value=${rural} style="width:6em" /> Urban:
+      <input type="number" min="0" step="1" id="urbanPop" value=${urban} style="width:6em" ${burgs.length ? "" : "disabled"} />
+      <p>Total population: ${l(total)} ⇒ <span id="totalPop">${l(total)}</span> (<span id="totalPopPerc">100</span>%)</p>`;
 
     const update = function () {
       const totalNew = ruralPop.valueAsNumber + urbanPop.valueAsNumber;
@@ -417,6 +452,26 @@ function editCultures() {
     tip(`Names for ${cBurgs.length} burgs are regenerated`, false, "success");
   }
 
+  function removeCultureModel(culture) {
+    cults.select("#culture" + culture).remove();
+    debug.select("#cultureCenter" + culture).remove();
+
+    pack.burgs.filter(b => b.culture == culture).forEach(b => (b.culture = 0));
+    pack.states.forEach((s, i) => {
+      if (s.culture === culture) s.culture = 0;
+    });
+    pack.cells.culture.forEach((c, i) => {
+      if (c === culture) pack.cells.culture[i] = 0;
+    });
+    pack.cultures[culture].removed = true;
+
+    const origin = pack.cultures[culture].origin;
+    pack.cultures.forEach(c => {
+      if (c.origin === culture) c.origin = origin;
+    });
+    refreshCulturesEditor();
+  }
+
   function cultureRemove() {
     if (customization === 4) return;
     const culture = +this.parentNode.dataset.id;
@@ -427,23 +482,7 @@ function editCultures() {
       title: "Remove culture",
       buttons: {
         Remove: function () {
-          cults.select("#culture" + culture).remove();
-          debug.select("#cultureCenter" + culture).remove();
-
-          pack.burgs.filter(b => b.culture == culture).forEach(b => (b.culture = 0));
-          pack.states.forEach((s, i) => {
-            if (s.culture === culture) s.culture = 0;
-          });
-          pack.cells.culture.forEach((c, i) => {
-            if (c === culture) pack.cells.culture[i] = 0;
-          });
-          pack.cultures[culture].removed = true;
-
-          const origin = pack.cultures[culture].origin;
-          pack.cultures.forEach(c => {
-            if (c.origin === culture) c.origin = origin;
-          });
-          refreshCulturesEditor();
+          removeCultureModel(culture);
           $(this).dialog("close");
         },
         Cancel: function () {
@@ -894,14 +933,15 @@ function editCultures() {
     const shapes = Object.keys(COA.shields.types)
       .map(type => Object.keys(COA.shields[type]))
       .flat();
-
     const populated = pack.cells.pop.map((c, i) => (c ? i : null)).filter(c => c);
-
+    cultures.forEach(item => {
+      if (item.i) item.removed = true;
+    });
     for (const c of csv.iterator((a, b) => +a[0] > +b[0])) {
       let current;
       if (+c.id < cultures.length) {
         current = cultures[c.id];
-        current.removed = false;
+
         const ratio = current.urban / (current.rural + current.urban);
         applyPopulationChange(current.rural, current.urban, c.population * (1 - ratio), c.population * ratio, +c.id);
       } else {
@@ -909,6 +949,7 @@ function editCultures() {
         cultures.push(current);
       }
 
+      current.removed = false;
       current.name = c.culture;
       current.code = abbreviate(
         current.name,
@@ -930,9 +971,7 @@ function editCultures() {
       current.base = nameBaseIndex === -1 ? 0 : nameBaseIndex;
     }
 
-    const validId = cultures.filter(c => !c.removed).map(c => c.i);
-    cultures.forEach(item => (item.origin = validId.includes(item.origin) ? item.origin : 0));
-    cultures[0].origin = null;
+    cultures.filter(c => c.removed).forEach(c => removeCultureModel(c.i));
 
     drawCultures();
     refreshCulturesEditor();
