@@ -170,6 +170,6 @@ class BaseCell {
 export class CellGrid extends AbstractCellGrid {
   constructor(cellNumber) {
     super()
-    this.grid = [] // create voronoi
+    this.grid = [] // TODO: create voronoi
   }
 }
