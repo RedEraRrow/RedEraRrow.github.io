@@ -47,6 +47,7 @@ function isIterable(obj) {
 // an exception is thrown if typed arrays are not supported
 function TypedFastBitSet(iterable) {
   this.words = new Uint32Array(8);
+  this.protected = false;
   if (isIterable(iterable)) {
     for (const key of iterable) {
       this.add(key);
@@ -64,32 +65,39 @@ TypedFastBitSet.fromWords = function (words) {
 
 // Add the value (Set the bit at index to true)
 TypedFastBitSet.prototype.add = function (index) {
+  if (this.protected) throw new Exception('Can not modify protected set!');
   this.resize(index);
   this.words[index >>> 5] |= 1 << index;
+  return this;
 };
 
 // If the value was not in the set, add it, otherwise remove it (flip bit at index)
 TypedFastBitSet.prototype.flip = function (index) {
+  if (this.protected) throw new Exception('Can not modify protected set!');
   this.resize(index);
   this.words[index >>> 5] ^= 1 << index;
+  return this;
 };
 
 // Remove all values, reset memory usage
 TypedFastBitSet.prototype.clear = function () {
+  if (this.protected) throw new Exception('Can not modify protected set!');
   this.words = new Uint32Array(8);
+  return this;
 };
 
 // Set the bit at index to false
 TypedFastBitSet.prototype.remove = function (index) {
+  if (this.protected) throw new Exception('Can not modify protected set!');
   this.resize(index);
   this.words[index >>> 5] &= ~(1 << index);
+  return this;
 };
 
 // Set bits from start (inclusive) to end (exclusive)
 TypedFastBitSet.prototype.addRange = function (start, end) {
-  if (start >= end) {
-    return;
-  }
+  if (this.protected) throw new Exception('Can not modify protected set!');
+  if (start >= end) return;
 
   if (this.words.length << 5 <= end) {
     this.resize(end);
@@ -105,10 +113,12 @@ TypedFastBitSet.prototype.addRange = function (start, end) {
   this.words[firstword] |= ~0 << start;
   this.words.fill(~0, firstword + 1, endword);
   this.words[endword] |= ~0 >>> -end;
+  return this;
 };
 
 // Remove bits from start (inclusive) to end (exclusive)
 TypedFastBitSet.prototype.removeRange = function (start, end) {
+  if (this.protected) throw new Exception('Can not modify protected set!');
   start = Math.min(start, (this.words.length << 5) - 1);
   end = Math.min(end, (this.words.length << 5) - 1);
 
@@ -125,6 +135,7 @@ TypedFastBitSet.prototype.removeRange = function (start, end) {
   this.words[firstword] &= ~(~0 << start);
   this.words.fill(0, firstword + 1, endword);
   this.words[endword] &= ~(~0 >>> -end);
+  return this;
 };
 
 // Return true if no bit is set
@@ -167,6 +178,7 @@ TypedFastBitSet.prototype.resize = function (index) {
   const newwords = new Uint32Array(count << 1);
   newwords.set(this.words); // hopefully, this copy is fast
   this.words = newwords;
+  return this;
 };
 
 // fast function to compute the Hamming weight of a 32-bit unsigned integer
@@ -277,6 +289,7 @@ TypedFastBitSet.prototype.intersects = function (otherbitmap) {
 // Computes the intersection between this bitset and another one,
 // the current bitmap is modified  (and returned by the function)
 TypedFastBitSet.prototype.intersection = function (otherbitmap) {
+  if (this.protected) throw new Exception('Can not modify protected set!');
   const newcount = Math.min(this.words.length, otherbitmap.words.length);
   let k = 0 | 0;
   for (; k + 7 < newcount; k += 8) {
@@ -335,6 +348,7 @@ TypedFastBitSet.prototype.new_intersection = function (otherbitmap) {
 // Computes the intersection between this bitset and another one,
 // the current bitmap is modified
 TypedFastBitSet.prototype.equals = function (otherbitmap) {
+  if (this.protected) throw new Exception('Can not modify protected set!');
   const mcount = Math.min(this.words.length, otherbitmap.words.length);
   for (let k = 0 | 0; k < mcount; ++k) {
     if (this.words[k] != otherbitmap.words[k]) return false;
@@ -356,6 +370,7 @@ TypedFastBitSet.prototype.equals = function (otherbitmap) {
 // Computes the difference between this bitset and another one,
 // the current bitset is modified (and returned by the function)
 TypedFastBitSet.prototype.difference = function (otherbitmap) {
+  if (this.protected) throw new Exception('Can not modify protected set!');
   const newcount = Math.min(this.words.length, otherbitmap.words.length);
   let k = 0 | 0;
   for (; k + 7 < newcount; k += 8) {
@@ -379,6 +394,7 @@ TypedFastBitSet.prototype.difference = function (otherbitmap) {
 // (for this set A and other set B,
 //   this computes B = A - B  and returns B)
 TypedFastBitSet.prototype.difference2 = function (otherbitmap) {
+  if (otherbitmap.protected) throw new Exception('Can not modify protected set!');
   const mincount = Math.min(this.words.length, otherbitmap.words.length);
   otherbitmap.resize((this.words.length << 5) - 1);
   let k = 0 | 0;
@@ -427,6 +443,7 @@ TypedFastBitSet.prototype.difference_size = function (otherbitmap) {
 // Computes the changed elements (XOR) between this bitset and another one,
 // the current bitset is modified (and returned by the function)
 TypedFastBitSet.prototype.change = function (otherbitmap) {
+  if (this.protected) throw new Exception('Can not modify protected set!');
   const mincount = Math.min(this.words.length, otherbitmap.words.length);
   this.resize((otherbitmap.words.length << 5) - 1);
   let k = 0 | 0;
@@ -508,6 +525,7 @@ TypedFastBitSet.prototype.toString = function () {
 // Computes the union between this bitset and another one,
 // the current bitset is modified  (and returned by the function)
 TypedFastBitSet.prototype.union = function (otherbitmap) {
+  if (this.protected) throw new Exception('Can not modify protected set!');
   const mcount = Math.min(this.words.length, otherbitmap.words.length);
   let k = 0 | 0;
   for (; k + 7 < mcount; k += 8) {
