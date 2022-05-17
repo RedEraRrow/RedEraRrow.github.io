@@ -10,13 +10,22 @@ const TIME = DEBUG || !PRODUCTION;
 const WARN = true;
 const ERROR = true;
 
-// register service worker responsible for caching
 if (PRODUCTION && "serviceWorker" in navigator) {
   window.addEventListener("load", () => {
     navigator.serviceWorker.register("./sw.js").catch(err => {
       console.error("ServiceWorker registration failed: ", err);
     });
   });
+
+  window.addEventListener(
+    "beforeinstallprompt",
+    async event => {
+      event.preventDefault();
+      const Installation = await import("./modules/dynamic/installation.js");
+      Installation.init(event);
+    },
+    {once: true}
+  );
 }
 
 let packages;
@@ -165,6 +174,7 @@ let populationRate = +document.getElementById("populationRateInput").value;
 let distanceScale = +document.getElementById("distanceScaleInput").value;
 let urbanization = +document.getElementById("urbanizationInput").value;
 let urbanDensity = +document.getElementById("urbanDensityInput").value;
+let statesNeutral = 1; // statesEditor growth parameter
 
 applyStoredOptions();
 
@@ -457,17 +467,7 @@ function applyDefaultBiomesSystem() {
   return {i: d3.range(0, name.length), name, color, biomesMartix, habitability, iconsDensity, icons, cost};
 }
 
-let optimizedQuality = false;
-
 function handleZoom(isScaleChanged, isPositionChanged) {
-  if (!optimizedQuality) {
-    setRendering("optimizeSpeed");
-    setTimeout(() => {
-      optimizedQuality = false;
-      setRendering(shapeRendering.value);
-    }, 1000);
-  }
-
   viewbox.attr("transform", `translate(${viewX} ${viewY}) scale(${scale})`);
 
   if (isPositionChanged) drawCoordinates();

@@ -1,18 +1,21 @@
 "use strict";
 // version and caching control
 
-const version = "1.81"; // generator version, update each time
+const version = "1.82.0"; // generator version, update each time
 
 {
   document.title += " v" + version;
   const loadingScreenVersion = document.getElementById("version");
   if (loadingScreenVersion) loadingScreenVersion.innerHTML = version;
 
-  const majorVersion = Math.round(version * 10) / 10;
-  const storedVersion = +localStorage.getItem("version") || 0;
+  const versionNumber = parseFloat(version);
+  const storedVersion = localStorage.getItem("version") ? parseFloat(localStorage.getItem("version")) : 0;
 
-  const showUpdate = storedVersion < majorVersion;
-  if (showUpdate) setTimeout(showUpdateWindow, 5000);
+  const isOutdated = storedVersion !== versionNumber;
+  if (isOutdated) clearCache();
+
+  const showUpdate = storedVersion < versionNumber;
+  if (showUpdate) setTimeout(showUpdateWindow, 6000);
 
   function showUpdateWindow() {
     const changelog = "https://github.com/Azgaar/Fantasy-Map-Generator/wiki/Changelog";
@@ -25,6 +28,8 @@ const version = "1.81"; // generator version, update each time
 
       <ul>
         <strong>Latest changes:</strong>
+        <li>Ability to install the App</li>
+        <li>14 new default fonts</li>
         <li>Caching for faster startup</li>
         <li>Submap tool by Goteguru</li>
         <li>Resample tool by Goteguru</li>
@@ -32,9 +37,6 @@ const version = "1.81"; // generator version, update each time
         <li>Advanced notes editor</li>
         <li>Zones editor: filter by type</li>
         <li>Color picker: new hatchings</li>
-        <li>New style presets: Cyberpunk and Atlas</li>
-        <li>Burg temperature graph</li>
-        <li>4 new textures</li>
       </ul>
 
       <p>Join our <a href="${discord}" target="_blank">Discord server</a> and <a href="${reddit}" target="_blank">Reddit community</a> to ask questions, share maps, discuss the Generator and Worlbuilding, report bugs and propose new features.</p>
@@ -43,14 +45,14 @@ const version = "1.81"; // generator version, update each time
     const buttons = {
       Ok: function () {
         $(this).dialog("close");
-        if (storedVersion) clearStoredData();
+        if (storedVersion) localStorage.clear();
         localStorage.setItem("version", version);
       }
     };
 
     if (storedVersion) {
       buttons.Reload = () => {
-        clearStoredData();
+        localStorage.clear();
         localStorage.setItem("version", version);
         location.reload();
       };
@@ -65,8 +67,7 @@ const version = "1.81"; // generator version, update each time
     });
   }
 
-  async function clearStoredData() {
-    localStorage.clear();
+  async function clearCache() {
     const cacheNames = await caches.keys();
     Promise.all(cacheNames.map(cacheName => caches.delete(cacheName)));
   }
