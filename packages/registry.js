@@ -46,7 +46,7 @@ export async function load() {
 export function startConsole() {
   console.log("%c🗺 FMG console\n", "font-size:14px; text-align:center; color:yellow; ")
   window.fmg = commands
-  commands.help()
+  commands.fhelp()
 }
 
 // global console command registration

@@ -95,10 +95,15 @@ realized by creating new DetailStates using mutators (the Generators).
 
 *Generator*
 : detail generators are factory functions returning list of standardized
-DetailState objects (one or more). Generators accept a GeneratorConfig and
-a list of DetailStates (subset of the current MapState). Their type is:
-`async (GeneratorConfig, Set<DetailState>) => Set<DetailState>`
+DetailState objects (one or more). Generators accept a GeneratorContext  
+(GeneratorConfig and a list of DetailStates (subset of the current MapState)).
+Their type is:
+`async GeneratorContext  => Set<DetailState>`
 Generators must be deterministic and pure (shouldn't generate side effects).
+
+*GeneratorContext*
+: context for generators providing two important objects:
+config: GeneratorConfig and states: Set<DetailState>
 
 *GeneratorQueue*
 : ordered list of generators, representing some specific Map-autogeneration

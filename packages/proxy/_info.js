@@ -2,7 +2,9 @@ export default {
   name: "Proxy",
   description: `
     Proxy package for legacy data structures.
-    No dependencies calculated, you are responsible for data consistency.
+    No dependencies are calculated. Provided resources may or may not exists at call time.
+    You are responsible for using proxy resources after the corresponding legacy generator
+    and keep data consistency.
   `,
 
   generators: [
