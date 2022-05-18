@@ -147,7 +147,6 @@ MapStates (the change) and use the appropriate sub-generator to efficiently
 regenerate subset of the Image. Change detection can be implemented as
 input (GeneratorConfig) or using the Observer pattern.
 
-Package provided sub-renderers are following the below pattern
-(eg. for an SVG renderer in the Road package):
-`async render(SVGConfig, SVG, Set<DetailState>): SVG`
-where SVG is a specialization of DetailState.
+Package provided sub-renderers (eg. an SVG renderer in the Road package) should
+  have the following signature: `async render(SVGConfig, SVG, Set<DetailState>): SVG`
+  where SVG is a specialization of DetailState.
