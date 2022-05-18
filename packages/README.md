@@ -5,21 +5,21 @@ for a specific map detail (eg. Heightmap, Grid, Windrose, States or Roads).
 
 They are:
 
-- *Self contained* as they include the data model, data access API,
+- **Self contained** as they include the data model, data access API,
   data modification API, generation algorithm, render algorithm,
-  generator UI and modification UI in a single package.
-- *Modular* as they must obey specific rules and have some particular structure
+  generator UI and modification UI in a *single package*.
+- **Modular** as they must obey specific rules and have some particular structure
   (implement a Package interface). Thanks to this, they are interchangable.
-- *Closed* as they expose a specific API (interface) for other Packages.
-  Implementation details and (most of the) data structure is kept private.
-- *Optionally dependent* as packages may depend on other packages' data
+- **Closed** as they expose a specific API (interface) for other Packages,
+  but implementation details and (most of the) data structure is kept private.
+- **Optionally dependent** as packages may depend on other packages' data
   (eg. Road on Heightmap) but some dependencies can be optional.
 
 # Package Interface
 
 All packages must include an _info.js file read by the package manager
-for further information. (Underscore used for alphabetical ordering in the
-directory). Active package directory names must be included in 'regsitry.js'.
+for further information. (Underscore used to hack alphabetical ordering in the
+directory). Active package directory names must be listed in 'regsitry.js'.
 
 _info.js must have a default export which is single object in the following form:
 ```
@@ -44,7 +44,7 @@ GenDescriptor structure:
 }
 ```
 
-Loc object defined by:
+Loc object defined as:
 ```
 {
   include: Optional<String>, // module prop to use, defaults to 'default'
