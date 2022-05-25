@@ -1188,13 +1188,14 @@ function reGraph() {
   for (const i of cells.i) {
     const height = cells.h[i];
     const type = cells.t[i];
-    if (height < 20 && type !== -1 && type !== -2) continue; // exclude all deep ocean points
-    if (type === -2 && (i % 4 === 0 || features[cells.f[i]].type === "lake")) continue; // exclude non-coastal lake points
+    // if (height < 20 && type !== -1 && type !== -2) continue; // exclude all deep ocean points
+    // if (type === -2 && (i % 4 === 0 || features[cells.f[i]].type === "lake")) continue; // exclude non-coastal lake points
     const [x, y] = points[i];
 
     addNewPoint(i, x, y, height);
 
     // add additional points for cells along coast
+    /*
     if (type === 1 || type === -1) {
       if (cells.b[i]) continue; // not for near-border cells
       cells.c[i].forEach(function (e) {
@@ -1208,6 +1209,7 @@ function reGraph() {
         }
       });
     }
+    */
   }
 
   function addNewPoint(i, x, y, height) {

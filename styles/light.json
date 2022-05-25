@@ -290,8 +290,7 @@
     "skip": 5,
     "relax": 0,
     "curve": 0,
-    "filter": "url(#turbulence)",
-    "mask": "url(#land)"
+    "filter": "url(#turbulence)"
   },
   "#legend": {
     "data-size": 13,

@@ -175,7 +175,7 @@ function drawHeightmap() {
       lineGen.curve(d3.curveBasisClosed);
   }
 
-  let currentLayer = 20;
+  let currentLayer = 1;
   const heights = cells.i.sort((a, b) => cells.h[a] - cells.h[b]);
   for (const i of heights) {
     const h = cells.h[i];
@@ -192,8 +192,8 @@ function drawHeightmap() {
     paths[h] += round(lineGen(points));
   }
 
-  terrs.append("rect").attr("x", 0).attr("y", 0).attr("width", graphWidth).attr("height", graphHeight).attr("fill", scheme(0.8)); // draw base layer
-  for (const i of d3.range(20, 101)) {
+  terrs.append("rect").attr("x", 0).attr("y", 0).attr("width", graphWidth).attr("height", graphHeight).attr("fill", getColor(0, scheme)); // draw base layer
+  for (const i of d3.range(1, 101)) {
     if (paths[i].length < 10) continue;
     const color = getColor(i, scheme);
     if (terracing)

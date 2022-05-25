@@ -94,7 +94,7 @@ function selectStyleElement() {
   }
 
   // clipping
-  if (["cells", "gridOverlay", "coordinates", "compass", "terrain", "temperature", "routes", "texture", "biomes", "zones"].includes(sel)) {
+  if (["cells", "gridOverlay", "coordinates", "compass",  "temperature", "routes", "texture", "biomes", "zones"].includes(sel)) {
     styleClipping.style.display = "block";
     styleClippingInput.value = el.attr("mask") || "";
   }
